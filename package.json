@@ -30,6 +30,9 @@
     "branches"
   ],
   "main": "./dist/extension.js",
+  "extensionDependencies": [
+    "vscode.git"
+  ],
   "activationEvents": [],
   "contributes": {
     "commands": [
