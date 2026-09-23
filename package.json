@@ -61,6 +61,35 @@
         "title": "Show Diff",
         "category": "Dimicek",
         "icon": "$(diff)"
+      },
+      {
+        "command": "dimicek.changes.openFile",
+        "title": "Open File",
+        "category": "Dimicek",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "dimicek.changes.rollback",
+        "title": "Rollback…",
+        "category": "Dimicek",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "dimicek.changes.addToVcs",
+        "title": "Add to VCS",
+        "category": "Dimicek",
+        "icon": "$(add)"
+      },
+      {
+        "command": "dimicek.changes.ignore",
+        "title": "Add to .gitignore…",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.changes.delete",
+        "title": "Delete…",
+        "category": "Dimicek",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -131,6 +160,68 @@
         {
           "command": "dimicek.changes.showDiff",
           "when": "false"
+        },
+        {
+          "command": "dimicek.changes.openFile",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.changes.rollback",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.changes.addToVcs",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.changes.ignore",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.changes.delete",
+          "when": "false"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "dimicek.changes.rollback",
+          "when": "view == dimicek.changes && viewItem =~ /^file:(modified|added|deleted|renamed)$/",
+          "group": "inline"
+        },
+        {
+          "command": "dimicek.changes.addToVcs",
+          "when": "view == dimicek.changes && viewItem == file:unversioned",
+          "group": "inline"
+        },
+        {
+          "command": "dimicek.changes.showDiff",
+          "when": "view == dimicek.changes && viewItem =~ /^file:/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "dimicek.changes.openFile",
+          "when": "view == dimicek.changes && viewItem =~ /^file:(modified|added|renamed|unversioned|conflicted)$/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "dimicek.changes.rollback",
+          "when": "view == dimicek.changes && viewItem =~ /^(file:(modified|added|deleted|renamed)|group:changes|directory:changes)$/",
+          "group": "1_modification@1"
+        },
+        {
+          "command": "dimicek.changes.addToVcs",
+          "when": "view == dimicek.changes && viewItem =~ /^(file|group|directory):unversioned$/",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "dimicek.changes.ignore",
+          "when": "view == dimicek.changes && viewItem =~ /^(file|directory):unversioned$/",
+          "group": "1_modification@3"
+        },
+        {
+          "command": "dimicek.changes.delete",
+          "when": "view == dimicek.changes && viewItem =~ /^file:(modified|added|renamed|unversioned|conflicted)$/",
+          "group": "2_delete@1"
         }
       ]
     },
@@ -143,7 +234,38 @@
           "description": "Group files in the Changes view by directory."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "dimicek.changes.showDiff",
+        "key": "ctrl+d",
+        "mac": "cmd+d",
+        "when": "focusedView == dimicek.changes"
+      },
+      {
+        "command": "dimicek.changes.openFile",
+        "key": "f4",
+        "when": "focusedView == dimicek.changes"
+      },
+      {
+        "command": "dimicek.changes.rollback",
+        "key": "ctrl+alt+z",
+        "mac": "cmd+alt+z",
+        "when": "focusedView == dimicek.changes"
+      },
+      {
+        "command": "dimicek.changes.addToVcs",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "focusedView == dimicek.changes"
+      },
+      {
+        "command": "dimicek.changes.delete",
+        "key": "delete",
+        "mac": "cmd+backspace",
+        "when": "focusedView == dimicek.changes"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

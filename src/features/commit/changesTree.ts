@@ -100,15 +100,19 @@ export class ChangesTreeProvider
     }
   }
 
-  private pathsOf(node: ChangesNode): string[] {
+  changesOf(node: ChangesNode): FileChange[] {
     switch (node.type) {
       case 'group':
-        return node.group.changes.map((change) => change.path);
+        return node.group.changes;
       case 'directory':
-        return filesUnder(node.directory).map((change) => change.path);
+        return filesUnder(node.directory);
       case 'file':
-        return [node.change.path];
+        return [node.change];
     }
+  }
+
+  private pathsOf(node: ChangesNode): string[] {
+    return this.changesOf(node).map((change) => change.path);
   }
 
   private checkbox(paths: readonly string[]): vscode.TreeItemCheckboxState {
@@ -140,7 +144,7 @@ export class ChangesTreeProvider
         item.label = directory.name;
         item.iconPath = vscode.ThemeIcon.Folder;
         item.description = fileCount(filesUnder(directory).length);
-        item.contextValue = 'directory';
+        item.contextValue = `directory:${groupId}`;
         item.checkboxState = this.checkbox(this.pathsOf(node));
         return item;
       }

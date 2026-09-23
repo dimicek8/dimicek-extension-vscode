@@ -86,6 +86,24 @@ export class Repository {
     return this.run(['cat-file', '--filters', `${ref}:${path}`], signal);
   }
 
+  rollback(plan: { restore: readonly string[]; unstage: readonly string[] }): Promise<void> {
+    return this.exclusive(async () => {
+      if (plan.restore.length > 0) {
+        await this.run([
+          'restore',
+          '--source=HEAD',
+          '--staged',
+          '--worktree',
+          '--',
+          ...plan.restore,
+        ]);
+      }
+      if (plan.unstage.length > 0) {
+        await this.run(['rm', '--cached', '--quiet', '-r', '--force', '--', ...plan.unstage]);
+      }
+    });
+  }
+
   add(paths: readonly string[]): Promise<void> {
     return this.exclusive(async () => {
       await this.run(['add', '--', ...paths]);

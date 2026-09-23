@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { commitPaths, groupChanges, toFileChanges } from '../../../src/features/commit/fileChanges';
+import {
+  commitPaths,
+  groupChanges,
+  rollbackPlan,
+  toFileChanges,
+} from '../../../src/features/commit/fileChanges';
 import type { GitStatus, StatusEntry } from '../../../src/git/parsers/status';
 
 const status = (...entries: StatusEntry[]): GitStatus => ({ branch: {}, entries, stashCount: 0 });
@@ -76,5 +81,20 @@ describe('commitPaths', () => {
       paths: ['a.txt', 'old.txt', 'new.txt', 'u.txt', 'd.txt'],
       addPaths: ['u.txt'],
     });
+  });
+});
+
+describe('rollbackPlan', () => {
+  it('restores tracked files from HEAD and only unstages added files', () => {
+    expect(
+      rollbackPlan([
+        { path: 'm.txt', kind: 'modified' },
+        { path: 'd.txt', kind: 'deleted' },
+        { path: 'new.txt', originalPath: 'old.txt', kind: 'renamed' },
+        { path: 'a.txt', kind: 'added' },
+        { path: 'u.txt', kind: 'unversioned' },
+        { path: 'c.txt', kind: 'conflicted' },
+      ]),
+    ).toEqual({ restore: ['m.txt', 'd.txt', 'old.txt', 'new.txt'], unstage: ['a.txt'] });
   });
 });

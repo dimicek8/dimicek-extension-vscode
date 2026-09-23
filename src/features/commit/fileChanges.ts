@@ -83,3 +83,29 @@ export function commitPaths(changes: readonly FileChange[]): {
       .map((change) => change.path),
   };
 }
+
+export function rollbackPlan(changes: readonly FileChange[]): {
+  restore: string[];
+  unstage: string[];
+} {
+  const restore: string[] = [];
+  const unstage: string[] = [];
+  for (const change of changes) {
+    switch (change.kind) {
+      case 'modified':
+      case 'deleted':
+        restore.push(change.path);
+        break;
+      case 'renamed':
+        restore.push(...(change.originalPath ? [change.originalPath] : []), change.path);
+        break;
+      case 'added':
+        unstage.push(change.path);
+        break;
+      case 'unversioned':
+      case 'conflicted':
+        break;
+    }
+  }
+  return { restore, unstage };
+}

@@ -34,6 +34,7 @@ const BASE_ARGS = ['-c', 'core.quotepath=false', '-c', 'color.ui=false'];
 const BASE_ENV: Record<string, string> = {
   GIT_TERMINAL_PROMPT: '0',
   GIT_OPTIONAL_LOCKS: '0',
+  GIT_LITERAL_PATHSPECS: '1',
   LC_ALL: 'C',
   LANG: 'C',
 };

@@ -7,17 +7,18 @@ import { CommitMessageHistory } from './commitMessageHistory';
 import { CommitViewProvider } from './commitViewProvider';
 import { ChangesModel } from './changesModel';
 import {
-  type ChangesNode,
   ChangesTreeProvider,
   GROUP_BY_DIRECTORY_SETTING,
   isGroupedByDirectory,
 } from './changesTree';
-import { showChangeDiff } from './showDiff';
+import { ChangeActions } from './changeActions';
+import { registerChangeCommands } from './changeCommands';
 
 export interface CommitFeature {
   model: ChangesModel;
   tree: ChangesTreeProvider;
   commitView: CommitViewProvider;
+  actions: ChangeActions;
 }
 
 function describeBranch(branch: BranchStatus): string | undefined {
@@ -46,10 +47,12 @@ export function registerCommitFeature(
     () => describeBranch(model.branch),
   );
   const tree = new ChangesTreeProvider(model);
+  const actions = new ChangeActions(model, output);
   const view = vscode.window.createTreeView('dimicek.changes', {
     treeDataProvider: tree,
     showCollapseAll: true,
     manageCheckboxStateManually: true,
+    canSelectMany: true,
   });
 
   const updateGroupingContext = () =>
@@ -81,12 +84,7 @@ export function registerCommitFeature(
     commitView,
     vscode.window.registerWebviewViewProvider(CommitViewProvider.viewId, commitView),
     contentProvider,
-    vscode.commands.registerCommand('dimicek.changes.showDiff', async (node?: ChangesNode) => {
-      const target = node ?? view.selection[0];
-      if (target?.type === 'file') {
-        await showChangeDiff(target.root, target.change);
-      }
-    }),
+    ...registerChangeCommands(view, tree, actions),
     vscode.commands.registerCommand('dimicek.changes.groupByDirectory', () => setGrouping(true)),
     vscode.commands.registerCommand('dimicek.changes.showFlat', () => setGrouping(false)),
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -98,5 +96,5 @@ export function registerCommitFeature(
 
   void updateGroupingContext();
   void model.refresh();
-  return { model, tree, commitView };
+  return { model, tree, commitView, actions };
 }
