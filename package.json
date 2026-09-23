@@ -31,7 +31,15 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [],
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "dimicek.hello",
+        "title": "Hello",
+        "category": "Dimicek"
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "build": "npm run check-types && node esbuild.mjs",
