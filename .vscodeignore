@@ -1,0 +1,21 @@
+# Everything not needed at runtime stays out of the .vsix
+.vscode/**
+.vscode-test/**
+.github/**
+src/**
+test/**
+out/**
+webview-ui/**
+node_modules/**
+**/*.map
+**/*.ts
+**/tsconfig*.json
+esbuild.mjs
+eslint.config.mjs
+vitest.config.*
+.vscode-test.*
+.prettierrc.json
+.prettierignore
+.gitignore
+CLAUDE.md
+.claude/**
