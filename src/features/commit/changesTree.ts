@@ -1,14 +1,23 @@
-import { basename, dirname } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import * as vscode from 'vscode';
 import { changeUri } from './changeDecorations';
 import type { ChangesModel } from './changesModel';
-import { type ChangeGroup, type FileChange, groupChanges } from './fileChanges';
+import { buildDirectoryTree, type DirectoryNode, filesUnder } from './directoryTree';
+import { type ChangeGroup, type ChangeGroupId, type FileChange, groupChanges } from './fileChanges';
 
 export type ChangesNode =
-  { type: 'group'; group: ChangeGroup } | { type: 'file'; change: FileChange; root: string };
+  | { type: 'group'; group: ChangeGroup }
+  | { type: 'directory'; directory: DirectoryNode; groupId: ChangeGroupId; root: string }
+  | { type: 'file'; change: FileChange; root: string; flat: boolean };
+
+export const GROUP_BY_DIRECTORY_SETTING = 'dimicek.changes.groupByDirectory';
 
 function fileCount(count: number): string {
   return count === 1 ? '1 file' : `${count} files`;
+}
+
+export function isGroupedByDirectory(): boolean {
+  return vscode.workspace.getConfiguration().get<boolean>(GROUP_BY_DIRECTORY_SETTING, true);
 }
 
 export class ChangesTreeProvider
@@ -16,10 +25,17 @@ export class ChangesTreeProvider
 {
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changeEmitter.event;
-  private readonly subscription: vscode.Disposable;
+  private readonly subscriptions: vscode.Disposable[];
 
   constructor(private readonly model: ChangesModel) {
-    this.subscription = model.onDidChange(() => this.changeEmitter.fire());
+    this.subscriptions = [
+      model.onDidChange(() => this.changeEmitter.fire()),
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration(GROUP_BY_DIRECTORY_SETTING)) {
+          this.changeEmitter.fire();
+        }
+      }),
+    ];
   }
 
   getChildren(node?: ChangesNode): ChangesNode[] {
@@ -33,10 +49,38 @@ export class ChangesTreeProvider
       }
       return groupChanges(this.model.changes).map((group) => ({ type: 'group', group }));
     }
-    if (node.type === 'group') {
-      return node.group.changes.map((change) => ({ type: 'file', change, root }));
+    switch (node.type) {
+      case 'group':
+        if (!isGroupedByDirectory()) {
+          return node.group.changes.map((change) => ({ type: 'file', change, root, flat: true }));
+        }
+        return this.directoryChildren(buildDirectoryTree(node.group.changes), node.group.id, root);
+      case 'directory':
+        return this.directoryChildren(node.directory, node.groupId, root);
+      case 'file':
+        return [];
     }
-    return [];
+  }
+
+  private directoryChildren(
+    directory: DirectoryNode,
+    groupId: ChangeGroupId,
+    root: string,
+  ): ChangesNode[] {
+    return [
+      ...directory.directories.map((child): ChangesNode => ({
+        type: 'directory',
+        directory: child,
+        groupId,
+        root,
+      })),
+      ...directory.files.map((change): ChangesNode => ({
+        type: 'file',
+        change,
+        root,
+        flat: false,
+      })),
+    ];
   }
 
   applyCheckboxChanges(
@@ -57,9 +101,14 @@ export class ChangesTreeProvider
   }
 
   private pathsOf(node: ChangesNode): string[] {
-    return node.type === 'group'
-      ? node.group.changes.map((change) => change.path)
-      : [node.change.path];
+    switch (node.type) {
+      case 'group':
+        return node.group.changes.map((change) => change.path);
+      case 'directory':
+        return filesUnder(node.directory).map((change) => change.path);
+      case 'file':
+        return [node.change.path];
+    }
   }
 
   private checkbox(paths: readonly string[]): vscode.TreeItemCheckboxState {
@@ -69,30 +118,50 @@ export class ChangesTreeProvider
   }
 
   getTreeItem(node: ChangesNode): vscode.TreeItem {
-    if (node.type === 'group') {
-      const item = new vscode.TreeItem(node.group.label, vscode.TreeItemCollapsibleState.Expanded);
-      item.checkboxState = this.checkbox(this.pathsOf(node));
-      item.id = `group:${node.group.id}`;
-      item.description = fileCount(node.group.changes.length);
-      item.contextValue = `group:${node.group.id}`;
-      return item;
+    switch (node.type) {
+      case 'group': {
+        const item = new vscode.TreeItem(
+          node.group.label,
+          vscode.TreeItemCollapsibleState.Expanded,
+        );
+        item.id = `group:${node.group.id}`;
+        item.description = fileCount(node.group.changes.length);
+        item.contextValue = `group:${node.group.id}`;
+        item.checkboxState = this.checkbox(this.pathsOf(node));
+        return item;
+      }
+      case 'directory': {
+        const { directory, groupId, root } = node;
+        const item = new vscode.TreeItem(
+          vscode.Uri.file(join(root, directory.path)),
+          vscode.TreeItemCollapsibleState.Expanded,
+        );
+        item.id = `directory:${groupId}:${directory.path}`;
+        item.label = directory.name;
+        item.iconPath = vscode.ThemeIcon.Folder;
+        item.description = fileCount(filesUnder(directory).length);
+        item.contextValue = 'directory';
+        item.checkboxState = this.checkbox(this.pathsOf(node));
+        return item;
+      }
+      case 'file': {
+        const { change, root, flat } = node;
+        const item = new vscode.TreeItem(changeUri(root, change));
+        item.id = `file:${change.path}`;
+        item.label = basename(change.path);
+        const directory = dirname(change.path);
+        item.description = flat && directory !== '.' ? directory : undefined;
+        item.tooltip =
+          change.kind === 'renamed' ? `${change.originalPath} → ${change.path}` : change.path;
+        item.contextValue = `file:${change.kind}`;
+        item.checkboxState = this.checkbox([change.path]);
+        return item;
+      }
     }
-
-    const { change, root } = node;
-    const item = new vscode.TreeItem(changeUri(root, change));
-    item.id = `file:${change.path}`;
-    item.label = basename(change.path);
-    const directory = dirname(change.path);
-    item.description = directory === '.' ? undefined : directory;
-    item.tooltip =
-      change.kind === 'renamed' ? `${change.originalPath} → ${change.path}` : change.path;
-    item.contextValue = `file:${change.kind}`;
-    item.checkboxState = this.checkbox([change.path]);
-    return item;
   }
 
   dispose(): void {
-    this.subscription.dispose();
+    this.subscriptions.forEach((subscription) => subscription.dispose());
     this.changeEmitter.dispose();
   }
 }

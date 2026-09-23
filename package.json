@@ -48,6 +48,18 @@
         "title": "Refresh",
         "category": "Dimicek",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "dimicek.changes.groupByDirectory",
+        "title": "Group by Directory",
+        "category": "Dimicek",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "dimicek.changes.showFlat",
+        "title": "Show as Flat List",
+        "category": "Dimicek",
+        "icon": "$(list-flat)"
       }
     ],
     "viewsContainers": {
@@ -89,15 +101,43 @@
         {
           "command": "dimicek.changes.refresh",
           "when": "view == dimicek.changes",
-          "group": "navigation"
+          "group": "navigation@2"
+        },
+        {
+          "command": "dimicek.changes.groupByDirectory",
+          "when": "view == dimicek.changes && !dimicek.changes.groupedByDirectory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "dimicek.changes.showFlat",
+          "when": "view == dimicek.changes && dimicek.changes.groupedByDirectory",
+          "group": "navigation@1"
         }
       ],
       "commandPalette": [
         {
           "command": "dimicek.changes.refresh",
           "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.changes.groupByDirectory",
+          "when": "dimicek.hasRepository && !dimicek.changes.groupedByDirectory"
+        },
+        {
+          "command": "dimicek.changes.showFlat",
+          "when": "dimicek.hasRepository && dimicek.changes.groupedByDirectory"
         }
       ]
+    },
+    "configuration": {
+      "title": "Dimicek",
+      "properties": {
+        "dimicek.changes.groupByDirectory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Group files in the Changes view by directory."
+        }
+      }
     }
   },
   "scripts": {
