@@ -1,4 +1,6 @@
+import { GitError } from './gitError';
 import { type Git, isVersionAtLeast } from './gitExec';
+import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
@@ -34,5 +36,28 @@ export class Repository {
       ),
     ]);
     return parseRefs(output, remotes);
+  }
+
+  async hasCommits(signal?: AbortSignal): Promise<boolean> {
+    try {
+      await this.run(['rev-parse', '--verify', '--quiet', 'HEAD^{commit}'], signal);
+      return true;
+    } catch (error) {
+      if (error instanceof GitError && error.exitCode === 1) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  async getLog(options: LogOptions = {}, signal?: AbortSignal): Promise<Commit[]> {
+    try {
+      return parseLog(await this.run(buildLogArgs(options), signal));
+    } catch (error) {
+      if (error instanceof GitError && !(await this.hasCommits(signal))) {
+        return [];
+      }
+      throw error;
+    }
   }
 }

@@ -5,6 +5,7 @@ import {
   addWorkingTreeChanges,
   createHistoryRepo,
   type HistoryRepo,
+  TestRepo,
 } from '../../fixtures/testRepo';
 
 describe('Repository', () => {
@@ -54,6 +55,59 @@ describe('Repository', () => {
       expect(find('refs/remotes/origin/main')).toMatchObject({ commit: commits.remote });
       expect(find('refs/tags/v1.0')).toMatchObject({ annotated: true, commit: commits.merge });
       expect(find('refs/tags/light')).toMatchObject({ annotated: false, commit: commits.app });
+    });
+  });
+
+  describe('getLog', () => {
+    it('returns HEAD history in topological order with merge parents', async () => {
+      const { commits } = fixture;
+      const log = await repository.getLog();
+
+      expect(log.map((commit) => commit.hash).slice(0, 2)).toEqual([commits.local, commits.merge]);
+      expect(new Set(log.map((commit) => commit.hash))).toEqual(
+        new Set([
+          commits.local,
+          commits.merge,
+          commits.typo,
+          commits.logout,
+          commits.login,
+          commits.app,
+          commits.initial,
+        ]),
+      );
+      expect(log[1]).toMatchObject({
+        parents: [commits.typo, commits.logout],
+        subject: "Merge branch 'feature/login'",
+        refs: ['refs/tags/v1.0', 'refs/heads/gone'],
+        author: { name: 'Test User', email: 'test@example.com' },
+      });
+      expect(log[0]).toMatchObject({ isHead: true, refs: ['refs/heads/main'] });
+    });
+
+    it('includes all refs, pages and filters', async () => {
+      const { commits } = fixture;
+      const all = await repository.getLog({ all: true });
+      expect(all.map((commit) => commit.hash)).toContain(commits.remote);
+
+      const head = await repository.getLog();
+      const page = await repository.getLog({ maxCount: 2, skip: 1 });
+      expect(page).toEqual(head.slice(1, 3));
+
+      const byPath = await repository.getLog({ paths: ['README.md'] });
+      expect(byPath.map((commit) => commit.hash)).toEqual([commits.typo, commits.initial]);
+
+      const byMessage = await repository.getLog({ all: true, grep: 'REMOTE change' });
+      expect(byMessage.map((commit) => commit.hash)).toEqual([commits.remote]);
+    });
+
+    it('returns an empty history for a repository without commits', async () => {
+      const empty = TestRepo.create();
+      try {
+        const log = await new Repository(empty.root, new Git(await findGit([]))).getLog();
+        expect(log).toEqual([]);
+      } finally {
+        empty.dispose();
+      }
     });
   });
 
