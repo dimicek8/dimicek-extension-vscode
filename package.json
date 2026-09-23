@@ -42,6 +42,12 @@
         "command": "dimicek.hello",
         "title": "Hello",
         "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.changes.refresh",
+        "title": "Refresh",
+        "category": "Dimicek",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -56,9 +62,40 @@
     "views": {
       "dimicek": [
         {
+          "id": "dimicek.changes",
+          "name": "Changes"
+        },
+        {
           "type": "webview",
           "id": "dimicek.demo",
           "name": "Welcome"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "dimicek.changes",
+        "contents": "No changes.",
+        "when": "dimicek.hasRepository"
+      },
+      {
+        "view": "dimicek.changes",
+        "contents": "No Git repository found. Open a folder that contains a Git repository.",
+        "when": "!dimicek.hasRepository"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "dimicek.changes.refresh",
+          "when": "view == dimicek.changes",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dimicek.changes.refresh",
+          "when": "dimicek.hasRepository"
         }
       ]
     }
