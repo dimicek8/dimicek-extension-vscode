@@ -3,11 +3,13 @@ import type { BranchStatus } from '../../git/parsers/status';
 import type { Repository } from '../../git/repository';
 import type { RepoManager } from '../../vscode/repoManager';
 import { type FileChange, toFileChanges } from './fileChanges';
+import { Inclusion } from './inclusion';
 
 export class ChangesModel implements vscode.Disposable {
   private currentRepository: Repository | undefined;
   private currentChanges: FileChange[] = [];
   private currentBranch: BranchStatus = {};
+  private currentInclusion = new Inclusion();
   private pending: AbortController | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
@@ -41,6 +43,19 @@ export class ChangesModel implements vscode.Disposable {
     return this.currentBranch;
   }
 
+  get inclusion(): Inclusion {
+    return this.currentInclusion;
+  }
+
+  get includedChanges(): FileChange[] {
+    return this.currentInclusion.includedChanges(this.currentChanges);
+  }
+
+  setIncluded(paths: Iterable<string>, included: boolean): void {
+    this.currentInclusion.set(paths, included);
+    this.changeEmitter.fire();
+  }
+
   async refresh(): Promise<void> {
     this.pending?.abort();
     const controller = new AbortController();
@@ -52,8 +67,12 @@ export class ChangesModel implements vscode.Disposable {
       if (controller.signal.aborted) {
         return;
       }
+      if (repository !== this.currentRepository) {
+        this.currentInclusion = new Inclusion();
+      }
       this.currentRepository = repository;
       this.currentChanges = status ? toFileChanges(status) : [];
+      this.currentInclusion.update(this.currentChanges);
       this.currentBranch = status?.branch ?? {};
       await vscode.commands.executeCommand('setContext', 'dimicek.hasRepository', !!repository);
       this.changeEmitter.fire();

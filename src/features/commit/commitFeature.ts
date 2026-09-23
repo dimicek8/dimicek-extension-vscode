@@ -31,6 +31,7 @@ export function registerCommitFeature(
   const view = vscode.window.createTreeView('dimicek.changes', {
     treeDataProvider: tree,
     showCollapseAll: true,
+    manageCheckboxStateManually: true,
   });
 
   const updateView = () => {
@@ -44,6 +45,7 @@ export function registerCommitFeature(
     tree,
     view,
     model.onDidChange(updateView),
+    view.onDidChangeCheckboxState((event) => tree.applyCheckboxChanges(event.items)),
     vscode.window.registerFileDecorationProvider(new ChangeDecorationProvider()),
     vscode.commands.registerCommand('dimicek.changes.refresh', () => model.refresh()),
   );

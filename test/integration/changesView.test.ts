@@ -71,6 +71,35 @@ describe('Changes view', () => {
     assert.strictEqual(group.description, '4 files');
   });
 
+  it('includes tracked changes by default and lets checkboxes change the selection', () => {
+    const checked = vscode.TreeItemCheckboxState.Checked;
+    const unchecked = vscode.TreeItemCheckboxState.Unchecked;
+    const [changes, unversioned] = commit.tree.getChildren();
+    const state = (node: ChangesNode) => commit.tree.getTreeItem(node).checkboxState;
+
+    assert.strictEqual(state(changes!), checked);
+    assert.strictEqual(state(unversioned!), unchecked);
+    assert.deepStrictEqual(
+      commit.model.includedChanges.map((change) => change.path),
+      ['README.md', 'src/auth.ts', 'src/logout.ts', 'src/new file.ts'],
+    );
+
+    const readme = commit.tree.getChildren(changes)[0]!;
+    commit.tree.applyCheckboxChanges([[readme, unchecked]]);
+    assert.strictEqual(state(readme), unchecked);
+    assert.strictEqual(state(changes!), unchecked);
+
+    commit.tree.applyCheckboxChanges([[unversioned!, checked]]);
+    assert.strictEqual(state(unversioned!), checked);
+    assert.deepStrictEqual(
+      commit.model.includedChanges.map((change) => change.path),
+      ['notes/todo ž.txt', 'src/auth.ts', 'src/logout.ts', 'src/new file.ts'],
+    );
+
+    commit.tree.applyCheckboxChanges([[changes!, checked]]);
+    assert.strictEqual(state(readme), checked);
+  });
+
   it('exposes the current branch with ahead and behind counts', () => {
     assert.deepStrictEqual(
       {
