@@ -2,6 +2,7 @@ import * as esbuild from 'esbuild';
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
+const tests = process.argv.includes('--tests');
 
 /**
  * Prints build start/end markers that the VS Code background task
@@ -27,23 +28,38 @@ const watchMarkerPlugin = {
 };
 
 /** @type {import('esbuild').BuildOptions} */
-const extensionOptions = {
-  entryPoints: ['src/extension.ts'],
-  outfile: 'dist/extension.js',
+const nodeOptions = {
   bundle: true,
   format: 'cjs',
   platform: 'node',
   target: 'node22',
   external: ['vscode'],
-  minify: production,
-  sourcemap: !production,
   sourcesContent: false,
   logLevel: 'silent',
   plugins: [watchMarkerPlugin],
 };
 
+/** @type {import('esbuild').BuildOptions} */
+const extensionOptions = {
+  ...nodeOptions,
+  entryPoints: ['src/extension.ts'],
+  outfile: 'dist/extension.js',
+  minify: production,
+  sourcemap: !production,
+};
+
+/** Integration tests run inside VS Code via @vscode/test-cli (mocha). */
+/** @type {import('esbuild').BuildOptions} */
+const integrationTestOptions = {
+  ...nodeOptions,
+  entryPoints: ['test/integration/**/*.test.ts'],
+  outbase: 'test/integration',
+  outdir: 'out/test/integration',
+  sourcemap: true,
+};
+
 async function main() {
-  const ctx = await esbuild.context(extensionOptions);
+  const ctx = await esbuild.context(tests ? integrationTestOptions : extensionOptions);
   if (watch) {
     await ctx.watch();
   } else {
