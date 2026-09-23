@@ -114,6 +114,6 @@ describe('Change actions', () => {
     await vscode.commands.executeCommand('dimicek.changes.openFile', node('src/new file.ts'));
     const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
     assert.ok(input instanceof vscode.TabInputText);
-    assert.strictEqual(input.uri.fsPath, file('src/new file.ts'));
+    assert.strictEqual(input.uri.fsPath, vscode.Uri.file(file('src/new file.ts')).fsPath);
   });
 });

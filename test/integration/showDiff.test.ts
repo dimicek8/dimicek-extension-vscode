@@ -64,7 +64,10 @@ describe('Show diff', () => {
     assert.strictEqual(diff.original.scheme, GIT_SCHEME);
     assert.strictEqual(await text(diff.original), 'export const app = 1;\n');
     assert.strictEqual(diff.modified.scheme, 'file');
-    assert.strictEqual(diff.modified.fsPath, join(fixture.repo.root, 'src', 'app.ts'));
+    assert.strictEqual(
+      diff.modified.fsPath,
+      vscode.Uri.file(join(fixture.repo.root, 'src', 'app.ts')).fsPath,
+    );
   });
 
   it('uses the original path of a renamed file', async () => {
