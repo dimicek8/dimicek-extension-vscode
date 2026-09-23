@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import type { BranchStatus } from '../../git/parsers/status';
 import type { RepoManager } from '../../vscode/repoManager';
+import { GIT_SCHEME, GitContentProvider } from '../../vscode/gitContentProvider';
 import { ChangeDecorationProvider } from './changeDecorations';
 import { ChangesModel } from './changesModel';
+import type { ChangesNode } from './changesTree';
 import {
   ChangesTreeProvider,
   GROUP_BY_DIRECTORY_SETTING,
   isGroupedByDirectory,
 } from './changesTree';
+import { showChangeDiff } from './showDiff';
 
 export interface CommitFeature {
   model: ChangesModel;
@@ -31,6 +34,7 @@ export function registerCommitFeature(
   output: vscode.LogOutputChannel,
 ): CommitFeature {
   const model = new ChangesModel(repoManager, output);
+  const contentProvider = new GitContentProvider(repoManager);
   const tree = new ChangesTreeProvider(model);
   const view = vscode.window.createTreeView('dimicek.changes', {
     treeDataProvider: tree,
@@ -63,6 +67,14 @@ export function registerCommitFeature(
     view.onDidChangeCheckboxState((event) => tree.applyCheckboxChanges(event.items)),
     vscode.window.registerFileDecorationProvider(new ChangeDecorationProvider()),
     vscode.commands.registerCommand('dimicek.changes.refresh', () => model.refresh()),
+    vscode.workspace.registerTextDocumentContentProvider(GIT_SCHEME, contentProvider),
+    contentProvider,
+    vscode.commands.registerCommand('dimicek.changes.showDiff', async (node?: ChangesNode) => {
+      const target = node ?? view.selection[0];
+      if (target?.type === 'file') {
+        await showChangeDiff(target.root, target.change);
+      }
+    }),
     vscode.commands.registerCommand('dimicek.changes.groupByDirectory', () => setGrouping(true)),
     vscode.commands.registerCommand('dimicek.changes.showFlat', () => setGrouping(false)),
     vscode.workspace.onDidChangeConfiguration((event) => {

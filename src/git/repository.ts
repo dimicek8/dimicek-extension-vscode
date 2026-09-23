@@ -69,6 +69,10 @@ export class Repository {
     }
   }
 
+  getFileContent(ref: string, path: string, signal?: AbortSignal): Promise<string> {
+    return this.run(['cat-file', '--filters', `${ref}:${path}`], signal);
+  }
+
   add(paths: readonly string[]): Promise<void> {
     return this.exclusive(async () => {
       await this.run(['add', '--', ...paths]);

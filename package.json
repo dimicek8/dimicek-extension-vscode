@@ -60,6 +60,12 @@
         "title": "Show as Flat List",
         "category": "Dimicek",
         "icon": "$(list-flat)"
+      },
+      {
+        "command": "dimicek.changes.showDiff",
+        "title": "Show Diff",
+        "category": "Dimicek",
+        "icon": "$(diff)"
       }
     ],
     "viewsContainers": {
@@ -126,6 +132,10 @@
         {
           "command": "dimicek.changes.showFlat",
           "when": "dimicek.hasRepository && dimicek.changes.groupedByDirectory"
+        },
+        {
+          "command": "dimicek.changes.showDiff",
+          "when": "false"
         }
       ]
     },

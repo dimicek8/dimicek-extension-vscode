@@ -155,6 +155,11 @@ export class ChangesTreeProvider
           change.kind === 'renamed' ? `${change.originalPath} → ${change.path}` : change.path;
         item.contextValue = `file:${change.kind}`;
         item.checkboxState = this.checkbox([change.path]);
+        item.command = {
+          command: 'dimicek.changes.showDiff',
+          title: 'Show Diff',
+          arguments: [node],
+        };
         return item;
       }
     }
