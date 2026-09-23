@@ -1,4 +1,5 @@
 import { type Git, isVersionAtLeast } from './gitExec';
+import { parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
 export class Repository {
@@ -18,5 +19,20 @@ export class Repository {
       args.push('--show-stash');
     }
     return parseStatus(await this.run(args, signal));
+  }
+
+  async getRemotes(signal?: AbortSignal): Promise<string[]> {
+    return (await this.run(['remote'], signal)).split('\n').filter(Boolean);
+  }
+
+  async getRefs(signal?: AbortSignal): Promise<Ref[]> {
+    const [remotes, output] = await Promise.all([
+      this.getRemotes(signal),
+      this.run(
+        ['for-each-ref', `--format=${REFS_FORMAT}`, 'refs/heads', 'refs/remotes', 'refs/tags'],
+        signal,
+      ),
+    ]);
+    return parseRefs(output, remotes);
   }
 }

@@ -18,6 +18,45 @@ describe('Repository', () => {
 
   afterAll(() => fixture?.repo.dispose());
 
+  describe('getRefs', () => {
+    it('lists local branches, remote branches and tags', async () => {
+      const refs = await repository.getRefs();
+      const names = refs.map((ref) => `${ref.type}:${ref.name}`);
+      expect(names.sort()).toEqual(
+        [
+          'branch:feature/login',
+          'branch:gone',
+          'branch:main',
+          'remoteBranch:origin/feature/login',
+          'remoteBranch:origin/main',
+          'tag:light',
+          'tag:v1.0',
+        ].sort(),
+      );
+    });
+
+    it('reports upstream tracking and peeled tags', async () => {
+      const refs = await repository.getRefs();
+      const find = (name: string) => refs.find((ref) => ref.fullName === name);
+      const { commits } = fixture;
+
+      expect(find('refs/heads/main')).toMatchObject({
+        isHead: true,
+        commit: commits.local,
+        upstream: { name: 'origin/main', ahead: 1, behind: 1, gone: false },
+      });
+      expect(find('refs/heads/feature/login')).toMatchObject({
+        isHead: false,
+        commit: commits.logout,
+        upstream: { name: 'origin/feature/login', ahead: 0, behind: 0, gone: false },
+      });
+      expect(find('refs/heads/gone')).toMatchObject({ upstream: { gone: true } });
+      expect(find('refs/remotes/origin/main')).toMatchObject({ commit: commits.remote });
+      expect(find('refs/tags/v1.0')).toMatchObject({ annotated: true, commit: commits.merge });
+      expect(find('refs/tags/light')).toMatchObject({ annotated: false, commit: commits.app });
+    });
+  });
+
   describe('getStatus', () => {
     it('reports branch, upstream and ahead/behind on a clean tree', async () => {
       const status = await repository.getStatus();
