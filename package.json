@@ -38,38 +38,66 @@
         "title": "Hello",
         "category": "Dimicek"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dimicek",
+          "title": "Dimicek",
+          "icon": "media/dimicek.svg"
+        }
+      ]
+    },
+    "views": {
+      "dimicek": [
+        {
+          "type": "webview",
+          "id": "dimicek.demo",
+          "name": "Welcome"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "build": "npm run check-types && node esbuild.mjs",
-    "package": "npm run check-types && node esbuild.mjs --production",
+    "build": "npm run check-types && node esbuild.mjs && vite build --config webview-ui/vite.config.mts",
+    "package": "npm run check-types && node esbuild.mjs --production && vite build --config webview-ui/vite.config.mts",
     "watch": "run-p watch:*",
     "watch:esbuild": "node esbuild.mjs --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "check-types": "tsc --noEmit --project tsconfig.json",
+    "check-types": "tsc --noEmit --project tsconfig.json && tsc --noEmit --project webview-ui/tsconfig.json",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "vitest run",
     "pretest:integration": "npm run build && node esbuild.mjs --tests",
-    "test:integration": "vscode-test"
+    "test:integration": "vscode-test",
+    "watch:webview": "vite build --config webview-ui/vite.config.mts --watch --mode development"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/vscode": "~1.110.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vscode-elements/elements": "^2.5.1",
+    "@vscode-elements/react-elements": "^2.4.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "esbuild": "^0.28.2",
     "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.9.9",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.1",
+    "vite": "^8.3.0",
     "vitest": "^5.0.1"
   }
 }

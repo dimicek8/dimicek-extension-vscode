@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -9,7 +10,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['**/*.mjs'],
+    files: ['**/*.mjs', '**/*.mts'],
     languageOptions: { globals: globals.node },
   },
   {
@@ -20,5 +21,10 @@ export default tseslint.config(
       eqeqeq: 'error',
       'no-throw-literal': 'error',
     },
+  },
+  {
+    files: ['webview-ui/src/**/*.{ts,tsx}'],
+    languageOptions: { globals: globals.browser },
+    ...reactHooks.configs.flat.recommended,
   },
 );
