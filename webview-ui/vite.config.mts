@@ -4,10 +4,6 @@ import { defineConfig } from 'vite';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
-/**
- * Each entry becomes dist/webview/<name>.js (+ <name>.css) with stable file
- * names, so the extension can reference them without a manifest.
- */
 const entries = {
   demo: 'src/demo/main.tsx',
 };

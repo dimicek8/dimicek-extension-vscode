@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { DemoViewProvider } from './features/demo/demoViewProvider';
 
-/** Returned from `activate`; used by integration tests to observe internals. */
 export interface DimicekApi {
   demoView: DemoViewProvider;
 }

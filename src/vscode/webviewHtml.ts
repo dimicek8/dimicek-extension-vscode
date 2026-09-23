@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { getNonce } from '../shared/nonce';
 
-/** Folder with the Vite build output, relative to the extension root. */
 const WEBVIEW_DIST = ['dist', 'webview'];
 
 export function webviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
@@ -11,10 +10,6 @@ export function webviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions 
   };
 }
 
-/**
- * HTML shell for a React webview built by Vite. `entry` is the Vite entry name,
- * which produces `dist/webview/<entry>.js` and `dist/webview/<entry>.css`.
- */
 export function buildWebviewHtml(
   webview: vscode.Webview,
   extensionUri: vscode.Uri,

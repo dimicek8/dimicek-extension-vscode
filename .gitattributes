@@ -1,4 +1,3 @@
-# Keep LF everywhere so Prettier checks pass on Windows too
 * text=auto eol=lf
 *.png binary
 *.vsix binary

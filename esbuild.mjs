@@ -4,11 +4,6 @@ const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 const tests = process.argv.includes('--tests');
 
-/**
- * Prints build start/end markers that the VS Code background task
- * problem matcher in .vscode/tasks.json waits for.
- * @type {import('esbuild').Plugin}
- */
 const watchMarkerPlugin = {
   name: 'watch-markers',
   setup(build) {
@@ -27,7 +22,6 @@ const watchMarkerPlugin = {
   },
 };
 
-/** @type {import('esbuild').BuildOptions} */
 const nodeOptions = {
   bundle: true,
   format: 'cjs',
@@ -39,7 +33,6 @@ const nodeOptions = {
   plugins: [watchMarkerPlugin],
 };
 
-/** @type {import('esbuild').BuildOptions} */
 const extensionOptions = {
   ...nodeOptions,
   entryPoints: ['src/extension.ts'],
@@ -48,8 +41,6 @@ const extensionOptions = {
   sourcemap: !production,
 };
 
-/** Integration tests run inside VS Code via @vscode/test-cli (mocha). */
-/** @type {import('esbuild').BuildOptions} */
 const integrationTestOptions = {
   ...nodeOptions,
   entryPoints: ['test/integration/**/*.test.ts'],

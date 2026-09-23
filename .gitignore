@@ -1,21 +1,16 @@
-# Dependencies
 node_modules/
 
-# Build output
 dist/
 out/
 *.vsix
 
-# VS Code test instances
 .vscode-test/
 
-# Logs & misc
 *.log
 npm-debug.log*
 .DS_Store
 coverage/
 .env
 
-# Claude Code (local only, not versioned)
 CLAUDE.md
 .claude/

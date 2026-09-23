@@ -1,4 +1,3 @@
-// Per-component imports keep unused web components out of the bundle.
 import VscodeButton from '@vscode-elements/react-elements/dist/components/VscodeButton.js';
 import VscodeTextfield from '@vscode-elements/react-elements/dist/components/VscodeTextfield.js';
 import { useEffect, useState } from 'react';

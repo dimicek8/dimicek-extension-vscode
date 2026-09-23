@@ -1,4 +1,3 @@
-# Everything not needed at runtime stays out of the .vsix
 .vscode/**
 .vscode-test/**
 .github/**
