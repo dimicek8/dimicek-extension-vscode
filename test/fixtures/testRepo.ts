@@ -84,7 +84,11 @@ export class TestRepo {
   }
 
   dispose(): void {
-    rmSync(this.sandbox, { recursive: true, force: true });
+    try {
+      rmSync(this.sandbox, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    } catch {
+      return;
+    }
   }
 }
 
