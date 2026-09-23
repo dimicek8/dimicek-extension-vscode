@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { classifyGitError, GitError } from './gitError';
 
@@ -27,6 +27,8 @@ export interface GitInstallation {
 
 export const DEFAULT_TIMEOUT_MS = 60_000;
 
+const isWindows = process.platform === 'win32';
+
 const BASE_ARGS = ['-c', 'core.quotepath=false', '-c', 'color.ui=false'];
 
 const BASE_ENV: Record<string, string> = {
@@ -35,6 +37,24 @@ const BASE_ENV: Record<string, string> = {
   LC_ALL: 'C',
   LANG: 'C',
 };
+
+function killProcessTree(child: ChildProcess): void {
+  if (child.pid === undefined || child.exitCode !== null) {
+    return;
+  }
+  try {
+    if (isWindows) {
+      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true }).on(
+        'error',
+        () => child.kill(),
+      );
+    } else {
+      process.kill(-child.pid, 'SIGTERM');
+    }
+  } catch {
+    child.kill();
+  }
+}
 
 export function runGit(
   gitPath: string,
@@ -56,6 +76,7 @@ export function runGit(
       cwd: options.cwd,
       env: { ...process.env, ...BASE_ENV, ...options.env },
       windowsHide: true,
+      detached: !isWindows,
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
@@ -81,7 +102,7 @@ export function runGit(
     const abortWith = (code: 'Cancelled' | 'Timeout') => {
       const reason = code === 'Cancelled' ? 'Cancelled' : 'Timed out';
       settle(new GitError({ code, args, message: `${reason}: ${commandLine}` }));
-      child.kill();
+      killProcessTree(child);
     };
     const onAbort = () => abortWith('Cancelled');
     const timer = setTimeout(() => abortWith('Timeout'), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);

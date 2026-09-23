@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
@@ -35,7 +35,9 @@ describe('isVersionAtLeast', () => {
 describe('runGit', () => {
   const emptyDir = mkdtempSync(join(tmpdir(), 'dimicek-exec-'));
 
-  afterAll(() => rmSync(emptyDir, { recursive: true, force: true }));
+  afterAll(() =>
+    rmSync(emptyDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }),
+  );
 
   it('returns stdout of a successful command', async () => {
     const { stdout } = await runGit('git', ['--version'], { cwd: emptyDir });
@@ -95,6 +97,19 @@ describe('runGit', () => {
     const pending = runGit('git', slowCommand, { cwd: emptyDir, signal: controller.signal });
     setTimeout(() => controller.abort(), 100);
     await expect(pending).rejects.toMatchObject({ code: 'Cancelled' });
+  });
+
+  it('stops child processes of a cancelled command', async () => {
+    const marker = join(emptyDir, 'marker');
+    const writeLater = `!node -e "setTimeout(() => require('fs').writeFileSync('marker', ''), 1500)"`;
+    await expect(
+      runGit('git', ['-c', `alias.later=${writeLater}`, 'later'], {
+        cwd: emptyDir,
+        timeoutMs: 300,
+      }),
+    ).rejects.toMatchObject({ code: 'Timeout' });
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(existsSync(marker)).toBe(false);
   });
 });
 
