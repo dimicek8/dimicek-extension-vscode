@@ -3,9 +3,11 @@ import type { BranchStatus } from '../../git/parsers/status';
 import type { RepoManager } from '../../vscode/repoManager';
 import { GIT_SCHEME, GitContentProvider } from '../../vscode/gitContentProvider';
 import { ChangeDecorationProvider } from './changeDecorations';
+import { CommitMessageHistory } from './commitMessageHistory';
+import { CommitViewProvider } from './commitViewProvider';
 import { ChangesModel } from './changesModel';
-import type { ChangesNode } from './changesTree';
 import {
+  type ChangesNode,
   ChangesTreeProvider,
   GROUP_BY_DIRECTORY_SETTING,
   isGroupedByDirectory,
@@ -15,6 +17,7 @@ import { showChangeDiff } from './showDiff';
 export interface CommitFeature {
   model: ChangesModel;
   tree: ChangesTreeProvider;
+  commitView: CommitViewProvider;
 }
 
 function describeBranch(branch: BranchStatus): string | undefined {
@@ -35,6 +38,13 @@ export function registerCommitFeature(
 ): CommitFeature {
   const model = new ChangesModel(repoManager, output);
   const contentProvider = new GitContentProvider(repoManager);
+  const commitView = new CommitViewProvider(
+    context.extensionUri,
+    model,
+    new CommitMessageHistory(context.workspaceState),
+    output,
+    () => describeBranch(model.branch),
+  );
   const tree = new ChangesTreeProvider(model);
   const view = vscode.window.createTreeView('dimicek.changes', {
     treeDataProvider: tree,
@@ -68,6 +78,8 @@ export function registerCommitFeature(
     vscode.window.registerFileDecorationProvider(new ChangeDecorationProvider()),
     vscode.commands.registerCommand('dimicek.changes.refresh', () => model.refresh()),
     vscode.workspace.registerTextDocumentContentProvider(GIT_SCHEME, contentProvider),
+    commitView,
+    vscode.window.registerWebviewViewProvider(CommitViewProvider.viewId, commitView),
     contentProvider,
     vscode.commands.registerCommand('dimicek.changes.showDiff', async (node?: ChangesNode) => {
       const target = node ?? view.selection[0];
@@ -86,5 +98,5 @@ export function registerCommitFeature(
 
   void updateGroupingContext();
   void model.refresh();
-  return { model, tree };
+  return { model, tree, commitView };
 }

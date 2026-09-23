@@ -1,22 +1,24 @@
 import * as assert from 'node:assert';
 import * as vscode from 'vscode';
-import { activateExtension, EXTENSION_ID, waitFor } from './helpers';
+import { activateExtension, EXTENSION_ID } from './helpers';
 
 describe('Extension', () => {
-  it('activates when the hello command runs', async () => {
-    await vscode.commands.executeCommand('dimicek.hello');
+  it('activates and initializes its features', async () => {
+    const api = await activateExtension();
     assert.strictEqual(vscode.extensions.getExtension(EXTENSION_ID)?.isActive, true);
+    assert.ok(api.repoManager);
+    assert.ok(api.commit);
   });
 
   it('registers its commands', async () => {
     const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes('dimicek.hello'));
-  });
-
-  it('loads the React webview in the demo view', async () => {
-    const { demoView } = await activateExtension();
-    const ready = waitFor(demoView.onDidBecomeReady);
-    await vscode.commands.executeCommand('dimicek.demo.focus');
-    await ready;
+    for (const command of [
+      'dimicek.changes.refresh',
+      'dimicek.changes.showDiff',
+      'dimicek.changes.groupByDirectory',
+      'dimicek.changes.showFlat',
+    ]) {
+      assert.ok(commands.includes(command), `${command} is not registered`);
+    }
   });
 });

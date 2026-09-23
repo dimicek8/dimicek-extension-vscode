@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 const root = fileURLToPath(new URL('.', import.meta.url));
 
 const entries = {
-  demo: 'src/demo/main.tsx',
+  commit: 'src/commit/main.tsx',
 };
 
 export default defineConfig(({ mode }) => ({

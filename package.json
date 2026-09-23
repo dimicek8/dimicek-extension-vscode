@@ -39,11 +39,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "dimicek.hello",
-        "title": "Hello",
-        "category": "Dimicek"
-      },
-      {
         "command": "dimicek.changes.refresh",
         "title": "Refresh",
         "category": "Dimicek",
@@ -85,8 +80,8 @@
         },
         {
           "type": "webview",
-          "id": "dimicek.demo",
-          "name": "Welcome"
+          "id": "dimicek.commit",
+          "name": "Commit"
         }
       ]
     },
