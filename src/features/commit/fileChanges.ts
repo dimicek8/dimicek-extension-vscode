@@ -67,3 +67,19 @@ export function groupChanges(changes: readonly FileChange[]): ChangeGroup[] {
   }
   return groups;
 }
+
+export function commitPaths(changes: readonly FileChange[]): {
+  paths: string[];
+  addPaths: string[];
+} {
+  return {
+    paths: changes.flatMap((change) =>
+      change.kind === 'renamed' && change.originalPath !== undefined
+        ? [change.originalPath, change.path]
+        : [change.path],
+    ),
+    addPaths: changes
+      .filter((change) => change.kind === 'unversioned')
+      .map((change) => change.path),
+  };
+}

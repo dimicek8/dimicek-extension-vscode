@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupChanges, toFileChanges } from '../../../src/features/commit/fileChanges';
+import { commitPaths, groupChanges, toFileChanges } from '../../../src/features/commit/fileChanges';
 import type { GitStatus, StatusEntry } from '../../../src/git/parsers/status';
 
 const status = (...entries: StatusEntry[]): GitStatus => ({ branch: {}, entries, stashCount: 0 });
@@ -60,5 +60,21 @@ describe('groupChanges', () => {
       ['changes', ['a']],
       ['unversioned', ['c']],
     ]);
+  });
+});
+
+describe('commitPaths', () => {
+  it('commits both sides of a rename and adds unversioned files first', () => {
+    expect(
+      commitPaths([
+        { path: 'a.txt', kind: 'modified' },
+        { path: 'new.txt', originalPath: 'old.txt', kind: 'renamed' },
+        { path: 'u.txt', kind: 'unversioned' },
+        { path: 'd.txt', kind: 'deleted' },
+      ]),
+    ).toEqual({
+      paths: ['a.txt', 'old.txt', 'new.txt', 'u.txt', 'd.txt'],
+      addPaths: ['u.txt'],
+    });
   });
 });
