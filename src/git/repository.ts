@@ -1,14 +1,22 @@
 import { GitError } from './gitError';
-import { type Git, isVersionAtLeast } from './gitExec';
+import { type GitRunner, isVersionAtLeast } from './gitExec';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
 export class Repository {
+  private writeQueue: Promise<unknown> = Promise.resolve();
+
   constructor(
     readonly root: string,
-    private readonly git: Git,
+    private readonly git: GitRunner,
   ) {}
+
+  private exclusive<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.writeQueue.then(operation);
+    this.writeQueue = result.catch(() => undefined);
+    return result;
+  }
 
   private async run(args: string[], signal?: AbortSignal): Promise<string> {
     const { stdout } = await this.git.exec(args, { cwd: this.root, signal });
@@ -59,5 +67,11 @@ export class Repository {
       }
       throw error;
     }
+  }
+
+  add(paths: readonly string[]): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['add', '--', ...paths]);
+    });
   }
 }

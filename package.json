@@ -33,7 +33,9 @@
   "extensionDependencies": [
     "vscode.git"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
       {

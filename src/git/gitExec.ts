@@ -145,7 +145,12 @@ export function runGit(
   });
 }
 
-export class Git {
+export interface GitRunner {
+  readonly version: string;
+  exec(args: readonly string[], options: GitExecOptions): Promise<GitResult>;
+}
+
+export class Git implements GitRunner {
   constructor(
     readonly installation: GitInstallation,
     private readonly logger?: GitLogger,
