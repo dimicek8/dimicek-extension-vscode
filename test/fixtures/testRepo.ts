@@ -22,6 +22,7 @@ export class TestRepo {
     repo.git('config', 'user.email', 'test@example.com');
     repo.git('config', 'commit.gpgsign', 'false');
     repo.git('config', 'tag.gpgsign', 'false');
+    repo.git('config', 'core.autocrlf', 'false');
     return repo;
   }
 
@@ -78,6 +79,7 @@ export class TestRepo {
     repo.clock = this.clock;
     if (!bare) {
       repo.git('config', 'user.name', 'Other User');
+      repo.git('config', 'core.autocrlf', 'false');
       repo.git('config', 'user.email', 'other@example.com');
     }
     return repo;

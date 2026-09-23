@@ -45,13 +45,13 @@ describe('Repository rollback', () => {
   });
 
   it('treats paths literally instead of as glob patterns', async () => {
-    fixture.repo.commit('Add tricky names', { 'star*.txt': 'a\n', 'starX.txt': 'b\n' });
-    fixture.repo.write('star*.txt', 'changed a\n');
-    fixture.repo.write('starX.txt', 'changed b\n');
+    fixture.repo.commit('Add tricky names', { 'file[1].txt': 'a\n', 'file1.txt': 'b\n' });
+    fixture.repo.write('file[1].txt', 'changed a\n');
+    fixture.repo.write('file1.txt', 'changed b\n');
 
-    await repository.rollback(rollbackPlan([{ path: 'star*.txt', kind: 'modified' }]));
+    await repository.rollback(rollbackPlan([{ path: 'file[1].txt', kind: 'modified' }]));
 
-    expect(readFileSync(file('star*.txt'), 'utf8')).toBe('a\n');
-    expect(readFileSync(file('starX.txt'), 'utf8')).toBe('changed b\n');
+    expect(readFileSync(file('file[1].txt'), 'utf8')).toBe('a\n');
+    expect(readFileSync(file('file1.txt'), 'utf8')).toBe('changed b\n');
   });
 });
