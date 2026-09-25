@@ -334,6 +334,22 @@ export class Repository {
     );
   }
 
+  async getCommitFiles(
+    hash: string,
+    parents: readonly string[],
+    signal?: AbortSignal,
+  ): Promise<NameStatusEntry[]> {
+    if (parents.length === 0) {
+      return parseNameStatus(
+        await this.run(
+          ['diff-tree', '--root', '-r', '-z', '-M', '--name-status', '--no-commit-id', hash],
+          signal,
+        ),
+      );
+    }
+    return this.diffNameStatus(parents[0]!, hash, signal);
+  }
+
   async countAheadBehind(
     base: string,
     other: string,

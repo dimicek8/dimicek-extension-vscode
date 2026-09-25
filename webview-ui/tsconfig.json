@@ -17,5 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src", "../src/shared/protocol.ts"]
+  "include": ["src", "../src/shared/protocol.ts", "../src/shared/directoryTree.ts"]
 }

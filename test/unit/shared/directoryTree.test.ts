@@ -3,12 +3,12 @@ import {
   buildDirectoryTree,
   type DirectoryNode,
   filesUnder,
-} from '../../../src/features/commit/directoryTree';
+} from '../../../src/shared/directoryTree';
 import type { FileChange } from '../../../src/features/commit/fileChanges';
 
 const change = (path: string): FileChange => ({ path, kind: 'modified' });
 
-function shape(directory: DirectoryNode): unknown {
+function shape(directory: DirectoryNode<FileChange>): unknown {
   return {
     [`${directory.name}@${directory.path}`]: [
       ...directory.directories.map(shape),

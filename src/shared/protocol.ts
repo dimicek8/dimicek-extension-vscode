@@ -1,6 +1,8 @@
 import type { GraphRow } from '../git/graph/graphBuilder';
+import type { NameStatusEntry } from '../git/parsers/nameStatus';
 
 export type { GraphLine, GraphRow } from '../git/graph/graphBuilder';
+export type LogFileChange = NameStatusEntry;
 
 export interface CommitViewState {
   hasRepository: boolean;
@@ -40,6 +42,21 @@ export interface LogCommit {
   graph: GraphRow;
 }
 
+export interface LogCommitDetails {
+  hash: string;
+  subject: string;
+  body: string;
+  author: string;
+  authorEmail: string;
+  date: number;
+  committer: string;
+  committerEmail: string;
+  commitDate: number;
+  parents: string[];
+  refs: LogRef[];
+  files: LogFileChange[];
+}
+
 export type LogPeriod = 'day' | 'week' | 'month' | 'year';
 
 export interface LogFilters {
@@ -60,8 +77,15 @@ export type LogToWebview =
       branches: string[];
     }
   | { type: 'append'; commits: LogCommit[]; hasMore: boolean }
+  | { type: 'details'; details: LogCommitDetails }
+  | { type: 'detailsError'; hash: string; message: string }
   | { type: 'loading'; loading: boolean }
   | { type: 'error'; message: string };
 
 export type LogFromWebview =
-  { type: 'ready' } | { type: 'loadMore' } | { type: 'setFilters'; filters: LogFilters };
+  | { type: 'ready' }
+  | { type: 'loadMore' }
+  | { type: 'setFilters'; filters: LogFilters }
+  | { type: 'selectCommit'; hash: string }
+  | { type: 'openFileDiff'; hash: string; parent?: string; file: LogFileChange }
+  | { type: 'copy'; text: string };

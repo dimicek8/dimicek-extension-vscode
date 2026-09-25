@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { GraphBuilder, type GraphRow, linearRows } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
+import type { NameStatusEntry } from '../../git/parsers/nameStatus';
 import type { Repository } from '../../git/repository';
 import type { LogFilters } from '../../shared/protocol';
 import type { RepoManager } from '../../vscode/repoManager';
@@ -64,6 +65,22 @@ export class LogModel implements vscode.Disposable {
 
   get branches(): readonly string[] {
     return this.branchNames;
+  }
+
+  async getDetails(
+    hash: string,
+  ): Promise<{ commit: Commit; files: NameStatusEntry[] } | undefined> {
+    const repository = this.repository;
+    if (!repository) {
+      return undefined;
+    }
+    const commit =
+      this.commits.find((candidate) => candidate.hash === hash) ??
+      (await repository.getLog({ revisions: [hash], maxCount: 1 }))[0];
+    if (!commit) {
+      return undefined;
+    }
+    return { commit, files: await repository.getCommitFiles(commit.hash, commit.parents) };
   }
 
   setFilters(filters: LogFilters): Promise<void> {

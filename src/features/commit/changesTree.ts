@@ -2,12 +2,17 @@ import { basename, dirname, join } from 'node:path';
 import * as vscode from 'vscode';
 import { changeUri } from './changeDecorations';
 import type { ChangesModel } from './changesModel';
-import { buildDirectoryTree, type DirectoryNode, filesUnder } from './directoryTree';
+import { buildDirectoryTree, type DirectoryNode, filesUnder } from '../../shared/directoryTree';
 import { type ChangeGroup, type ChangeGroupId, type FileChange, groupChanges } from './fileChanges';
 
 export type ChangesNode =
   | { type: 'group'; group: ChangeGroup }
-  | { type: 'directory'; directory: DirectoryNode; groupId: ChangeGroupId; root: string }
+  | {
+      type: 'directory';
+      directory: DirectoryNode<FileChange>;
+      groupId: ChangeGroupId;
+      root: string;
+    }
   | { type: 'file'; change: FileChange; root: string; flat: boolean };
 
 export const GROUP_BY_DIRECTORY_SETTING = 'dimicek.changes.groupByDirectory';
@@ -63,7 +68,7 @@ export class ChangesTreeProvider
   }
 
   private directoryChildren(
-    directory: DirectoryNode,
+    directory: DirectoryNode<FileChange>,
     groupId: ChangeGroupId,
     root: string,
   ): ChangesNode[] {

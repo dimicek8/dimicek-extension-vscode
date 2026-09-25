@@ -248,3 +248,125 @@ body {
 .toolbar__since {
   width: 130px;
 }
+
+.log-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.log-body__list {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-body__list > .log {
+  flex: 1;
+  min-height: 0;
+}
+
+.log-body__divider {
+  flex: none;
+  width: 4px;
+  cursor: col-resize;
+  border-left: 1px solid var(--vscode-panel-border, transparent);
+}
+
+.log-body__divider:hover {
+  background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder));
+}
+
+.log-body__details {
+  flex: none;
+  overflow: auto;
+}
+
+.details {
+  padding: 8px 12px;
+}
+
+.details--empty {
+  color: var(--vscode-descriptionForeground);
+}
+
+.details__subject {
+  font-weight: 600;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.details__body {
+  margin: 0 0 8px;
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.details__meta {
+  margin-top: 4px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.details__link {
+  padding: 0;
+  margin-right: 6px;
+  border: none;
+  background: none;
+  color: var(--vscode-textLink-foreground);
+  font-family: var(--vscode-editor-font-family);
+  cursor: pointer;
+}
+
+.details__link:hover {
+  text-decoration: underline;
+}
+
+.details__files-title {
+  margin: 12px 0 4px;
+  font-weight: 600;
+}
+
+.files__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.files__row:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.files__twisty {
+  width: 10px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.files__status {
+  width: 12px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.files__status--added {
+  color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.files__status--modified,
+.files__status--typeChanged {
+  color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.files__status--deleted {
+  color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.files__status--renamed,
+.files__status--copied {
+  color: var(--vscode-gitDecoration-renamedResourceForeground);
+}

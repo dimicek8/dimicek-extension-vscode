@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef } from 'react';
 import type { LogCommit } from '../../../src/shared/protocol';
 import { formatCommitDate, shortHash } from './format';
 import { GraphCell } from './GraphCell';
@@ -12,12 +12,20 @@ interface CommitListProps {
   commits: LogCommit[];
   hasMore: boolean;
   loading: boolean;
+  selected?: string;
+  onSelect: (hash: string) => void;
   onLoadMore: () => void;
 }
 
-export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitListProps) {
+export function CommitList({
+  commits,
+  hasMore,
+  loading,
+  selected,
+  onSelect,
+  onLoadMore,
+}: CommitListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selected, setSelected] = useState<string>();
 
   const virtualizer = useVirtualizer({
     count: commits.length,
@@ -36,6 +44,12 @@ export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitList
 
   const selectedIndex = commits.findIndex((commit) => commit.hash === selected);
 
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      virtualizer.scrollToIndex(selectedIndex, { align: 'auto' });
+    }
+  }, [selectedIndex, virtualizer]);
+
   const onKeyDown = (event: KeyboardEvent) => {
     const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 20, PageUp: -20 }[event.key];
     if (step === undefined || commits.length === 0) {
@@ -43,8 +57,7 @@ export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitList
     }
     event.preventDefault();
     const next = Math.min(commits.length - 1, Math.max(0, selectedIndex + step));
-    setSelected(commits[next]!.hash);
-    virtualizer.scrollToIndex(next);
+    onSelect(commits[next]!.hash);
   };
 
   return (
@@ -76,7 +89,7 @@ export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitList
                 aria-selected={isSelected}
                 className={`log__row log__commit${isSelected ? ' log__commit--selected' : ''}${commit.isHead ? ' log__commit--head' : ''}`}
                 style={{ transform: `translateY(${item.start}px)` }}
-                onMouseDown={() => setSelected(commit.hash)}
+                onMouseDown={() => onSelect(commit.hash)}
               >
                 <span className="log__subject">
                   <GraphCell

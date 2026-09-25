@@ -1,15 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import type {
   LogCommit,
+  LogCommitDetails,
+  LogFileChange,
   LogFilters,
   LogFromWebview,
   LogToWebview,
 } from '../../../src/shared/protocol';
-import { createMessenger } from '../vscodeApi';
+import { createMessenger, loadState, saveState } from '../vscodeApi';
+import { CommitDetails } from './CommitDetails';
 import { CommitList } from './CommitList';
 import { LogToolbar } from './LogToolbar';
 
 const messenger = createMessenger<LogFromWebview, LogToWebview>();
+
+const DEFAULT_DETAILS_WIDTH = 360;
+const MIN_DETAILS_WIDTH = 200;
+
+interface LogViewState {
+  detailsWidth: number;
+}
 
 export function App() {
   const [commits, setCommits] = useState<LogCommit[]>([]);
@@ -20,6 +30,17 @@ export function App() {
   const [initialized, setInitialized] = useState(false);
   const [filters, setFilters] = useState<LogFilters>({});
   const [branches, setBranches] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string>();
+  const [details, setDetails] = useState<LogCommitDetails>();
+  const [detailsError, setDetailsError] = useState<string>();
+  const [detailsWidth, setDetailsWidth] = useState(
+    () => loadState<LogViewState>()?.detailsWidth ?? DEFAULT_DETAILS_WIDTH,
+  );
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    saveState<LogViewState>({ detailsWidth });
+  }, [detailsWidth]);
 
   useEffect(() => {
     const unsubscribe = messenger.onMessage((message) => {
@@ -43,6 +64,14 @@ export function App() {
         case 'error':
           setError(message.message);
           break;
+        case 'details':
+          setDetails(message.details);
+          setDetailsError(undefined);
+          break;
+        case 'detailsError':
+          setDetails(undefined);
+          setDetailsError(message.message);
+          break;
       }
     });
     messenger.post({ type: 'ready' });
@@ -54,6 +83,31 @@ export function App() {
     (next: LogFilters) => messenger.post({ type: 'setFilters', filters: next }),
     [],
   );
+  const select = useCallback((hash: string) => {
+    setSelected(hash);
+    messenger.post({ type: 'selectCommit', hash });
+  }, []);
+  const openFile = (file: LogFileChange) => {
+    if (details) {
+      messenger.post({
+        type: 'openFileDiff',
+        hash: details.hash,
+        parent: details.parents[0],
+        file,
+      });
+    }
+  };
+  const copy = (text: string) => messenger.post({ type: 'copy', text });
+
+  const resize = (event: PointerEvent<HTMLDivElement>) => {
+    const body = bodyRef.current;
+    if (!body || !event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    const rect = body.getBoundingClientRect();
+    const width = rect.right - event.clientX;
+    setDetailsWidth(Math.round(Math.min(rect.width * 0.7, Math.max(MIN_DETAILS_WIDTH, width))));
+  };
 
   if (initialized && !repository) {
     return <div className="log__message">No Git repository is open.</div>;
@@ -69,13 +123,42 @@ export function App() {
           onChange={changeFilters}
         />
       )}
-      {error ? (
-        <div className="log__message log__message--error">{error}</div>
-      ) : initialized && commits.length === 0 ? (
-        <div className="log__message">No commits match the filters.</div>
-      ) : (
-        <CommitList commits={commits} hasMore={hasMore} loading={loading} onLoadMore={loadMore} />
-      )}
+      <div className="log-body" ref={bodyRef}>
+        <div className="log-body__list">
+          {error ? (
+            <div className="log__message log__message--error">{error}</div>
+          ) : initialized && commits.length === 0 ? (
+            <div className="log__message">No commits match the filters.</div>
+          ) : (
+            <CommitList
+              commits={commits}
+              hasMore={hasMore}
+              loading={loading}
+              selected={selected}
+              onSelect={select}
+              onLoadMore={loadMore}
+            />
+          )}
+        </div>
+        <div
+          className="log-body__divider"
+          role="separator"
+          aria-orientation="vertical"
+          onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)}
+          onPointerMove={resize}
+          onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+        />
+        <div className="log-body__details" style={{ width: detailsWidth }}>
+          <CommitDetails
+            key={details?.hash}
+            details={details}
+            error={detailsError}
+            onSelectCommit={select}
+            onOpenFile={openFile}
+            onCopy={copy}
+          />
+        </div>
+      </div>
     </div>
   );
 }
