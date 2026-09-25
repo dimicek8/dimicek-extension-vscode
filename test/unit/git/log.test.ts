@@ -33,6 +33,7 @@ describe('parseLog', () => {
       body: 'Longer description\nwith two lines.',
       refs: ['refs/heads/main', 'refs/tags/v1', 'refs/remotes/origin/main'],
       isHead: true,
+      headRef: 'refs/heads/main',
     });
     expect(initial).toMatchObject({
       parents: [],
@@ -97,6 +98,7 @@ describe('buildLogArgs', () => {
       '--regexp-ignore-case',
       '--since=2026-01-01T00:00:00.000Z',
       '--until=2026-02-01T00:00:00.000Z',
+      '--exclude=refs/stash',
       '--all',
       '--end-of-options',
       '--',

@@ -84,3 +84,22 @@ describe('Repository branch operations', () => {
     expect((await head()).behind).toBe(2);
   });
 });
+
+describe('Repository log of all branches', () => {
+  it('does not include stash commits', async () => {
+    const fixture = createHistoryRepo();
+    try {
+      const repository = new Repository(fixture.repo.root, new Git(await findGit([])));
+      fixture.repo.write('README.md', 'stashed\n');
+      fixture.repo.git('stash', 'push', '--quiet');
+      const stash = fixture.repo.git('rev-parse', 'refs/stash');
+
+      const log = await repository.getLog({ all: true });
+
+      expect(log.map((commit) => commit.hash)).not.toContain(stash);
+      expect(log).toHaveLength(8);
+    } finally {
+      fixture.repo.dispose();
+    }
+  });
+});

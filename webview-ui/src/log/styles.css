@@ -166,3 +166,47 @@ body {
 .graph-color-7 {
   color: var(--vscode-terminal-ansiMagenta, #bc3fbc);
 }
+
+.refs {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  max-width: 50%;
+  overflow: hidden;
+}
+
+.ref {
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.85em;
+  line-height: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ref--branch {
+  color: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+}
+
+.ref--remote {
+  color: var(--vscode-charts-purple, #b180d7);
+}
+
+.ref--tag {
+  color: var(--vscode-charts-yellow, #cca700);
+}
+
+.ref--head {
+  color: var(--vscode-charts-blue, #3794ff);
+}
+
+.ref--current {
+  font-weight: 700;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.ref--more {
+  color: var(--vscode-descriptionForeground);
+}

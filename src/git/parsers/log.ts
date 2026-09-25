@@ -21,11 +21,17 @@ export interface Commit {
   body: string;
   refs: string[];
   isHead: boolean;
+  headRef?: string;
 }
 
-function parseDecorations(decorations: string): { refs: string[]; isHead: boolean } {
+function parseDecorations(decorations: string): {
+  refs: string[];
+  isHead: boolean;
+  headRef?: string;
+} {
   const refs: string[] = [];
   let isHead = false;
+  let headRef: string | undefined;
   for (const decoration of decorations.split(', ')) {
     if (decoration === '') {
       continue;
@@ -34,14 +40,15 @@ function parseDecorations(decorations: string): { refs: string[]; isHead: boolea
       isHead = true;
     } else if (decoration.startsWith('HEAD -> ')) {
       isHead = true;
-      refs.push(decoration.slice('HEAD -> '.length));
+      headRef = decoration.slice('HEAD -> '.length);
+      refs.push(headRef);
     } else if (decoration.startsWith('tag: ')) {
       refs.push(decoration.slice('tag: '.length));
     } else {
       refs.push(decoration);
     }
   }
-  return { refs, isHead };
+  return headRef === undefined ? { refs, isHead } : { refs, isHead, headRef };
 }
 
 function splitFields(record: string): string[] {
@@ -141,7 +148,7 @@ export function buildLogArgs(options: LogOptions = {}): string[] {
     args.push(`--until=${options.until.toISOString()}`);
   }
   if (options.all) {
-    args.push('--all');
+    args.push('--exclude=refs/stash', '--all');
   }
   args.push('--end-of-options', ...(options.revisions ?? (options.all ? [] : ['HEAD'])));
   args.push('--', ...(options.paths ?? []));

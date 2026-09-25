@@ -47,6 +47,15 @@ describe('Git Log', () => {
       merge.graph.lines.some((line) => line.kind === 'bottom' && line.to !== merge.graph.column),
     );
     assert.ok(message.commits.every((commit) => commit.graph.width >= 1));
+
+    const refsOf = (hash: string) =>
+      message.commits.find((commit) => commit.hash === hash)!.refs.map((ref) => ref.name);
+    assert.deepStrictEqual(refsOf(fixture.commits.local), ['main']);
+    assert.ok(
+      message.commits.find((commit) => commit.hash === fixture.commits.local)!.refs[0]!.current,
+    );
+    assert.deepStrictEqual(refsOf(fixture.commits.remote), ['origin/main']);
+    assert.deepStrictEqual(refsOf(fixture.commits.merge), ['gone', 'v1.0']);
   });
 
   it('loads further pages on demand', async () => {

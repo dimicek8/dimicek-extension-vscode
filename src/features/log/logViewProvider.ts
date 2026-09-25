@@ -4,6 +4,7 @@ import type { GraphRow } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
 import type { LogCommit, LogFromWebview, LogToWebview } from '../../shared/protocol';
 import { buildWebviewHtml, webviewOptions } from '../../vscode/webviewHtml';
+import { toLogRefs } from './logRefs';
 import type { LogModel, LogUpdate } from './logModel';
 
 export function toLogCommit(commit: Commit, graph: GraphRow): LogCommit {
@@ -15,6 +16,7 @@ export function toLogCommit(commit: Commit, graph: GraphRow): LogCommit {
     authorEmail: commit.author.email,
     date: commit.authorDate.getTime(),
     isHead: commit.isHead,
+    refs: toLogRefs(commit.refs, commit.isHead, commit.headRef),
     graph,
   };
 }

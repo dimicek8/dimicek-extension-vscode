@@ -22,6 +22,12 @@ export type CommitViewFromWebview =
   | { type: 'requestLastCommitMessage' }
   | { type: 'showHistory' };
 
+export interface LogRef {
+  name: string;
+  kind: 'head' | 'branch' | 'remote' | 'tag';
+  current: boolean;
+}
+
 export interface LogCommit {
   hash: string;
   parents: string[];
@@ -30,6 +36,7 @@ export interface LogCommit {
   authorEmail: string;
   date: number;
   isHead: boolean;
+  refs: LogRef[];
   graph: GraphRow;
 }
 

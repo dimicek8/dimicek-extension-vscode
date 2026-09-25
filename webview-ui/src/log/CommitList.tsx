@@ -3,6 +3,7 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { LogCommit } from '../../../src/shared/protocol';
 import { formatCommitDate, shortHash } from './format';
 import { GraphCell } from './GraphCell';
+import { RefLabels } from './RefLabels';
 
 export const ROW_HEIGHT = 22;
 const LOAD_MORE_THRESHOLD = 100;
@@ -84,6 +85,7 @@ export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitList
                     isHead={commit.isHead}
                     isMerge={commit.parents.length > 1}
                   />
+                  <RefLabels labels={commit.refs} />
                   <span className="log__subject-text" title={commit.subject}>
                     {commit.subject}
                   </span>
