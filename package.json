@@ -118,6 +118,17 @@
         "title": "Mark as Resolved",
         "category": "Dimicek",
         "icon": "$(check)"
+      },
+      {
+        "command": "dimicek.log.show",
+        "title": "Show Git Log",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.log.refresh",
+        "title": "Refresh Log",
+        "category": "Dimicek",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -125,6 +136,13 @@
         {
           "id": "dimicek",
           "title": "Dimicek",
+          "icon": "media/dimicek.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "dimicek-log",
+          "title": "Git Log",
           "icon": "media/dimicek.svg"
         }
       ]
@@ -139,6 +157,13 @@
           "type": "webview",
           "id": "dimicek.commit",
           "name": "Commit"
+        }
+      ],
+      "dimicek-log": [
+        {
+          "type": "webview",
+          "id": "dimicek.log",
+          "name": "Log"
         }
       ]
     },
@@ -175,6 +200,11 @@
           "command": "dimicek.branches.show",
           "when": "view == dimicek.changes",
           "group": "navigation@0"
+        },
+        {
+          "command": "dimicek.log.refresh",
+          "when": "view == dimicek.log",
+          "group": "navigation"
         }
       ],
       "commandPalette": [
@@ -233,6 +263,14 @@
         {
           "command": "dimicek.changes.markResolved",
           "when": "false"
+        },
+        {
+          "command": "dimicek.log.show",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.log.refresh",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [
@@ -350,6 +388,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tanstack/react-virtual": "^3.14.13",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.4",
     "@types/react": "^19.3.0",

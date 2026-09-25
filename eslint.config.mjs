@@ -27,4 +27,8 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
     ...reactHooks.configs.flat.recommended,
   },
+  {
+    files: ['webview-ui/src/**/*.{ts,tsx}'],
+    rules: { 'react-hooks/incompatible-library': 'off' },
+  },
 );

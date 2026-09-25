@@ -1,0 +1,102 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  color: var(--vscode-foreground);
+  background: var(--vscode-panel-background, var(--vscode-editor-background));
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.log {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.log__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 150px 72px;
+  gap: 12px;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.log__row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log__header {
+  flex: none;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+  font-weight: 600;
+}
+
+.log__scroll {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  outline: none;
+}
+
+.log__spacer {
+  position: relative;
+  width: 100%;
+}
+
+.log__commit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  cursor: default;
+}
+
+.log__commit:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.log__commit--selected,
+.log__commit--selected:hover {
+  background: var(--vscode-list-inactiveSelectionBackground);
+  color: var(--vscode-list-inactiveSelectionForeground, inherit);
+}
+
+.log__scroll:focus .log__commit--selected {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.log__commit--head .log__subject {
+  font-weight: 600;
+}
+
+.log__author,
+.log__date,
+.log__hash {
+  color: var(--vscode-descriptionForeground);
+}
+
+.log__hash {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.log__loading,
+.log__message {
+  padding: 8px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.log__message--error {
+  color: var(--vscode-errorForeground);
+}
