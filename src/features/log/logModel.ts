@@ -31,6 +31,7 @@ export class LogModel implements vscode.Disposable {
   private generation = 0;
   private loadingMore: Promise<void> | undefined;
   private fingerprint: string | undefined;
+  private latestLoad: Promise<void> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
 
   private readonly updateEmitter = new vscode.EventEmitter<LogUpdate>();
@@ -144,7 +145,20 @@ export class LogModel implements vscode.Disposable {
     return true;
   }
 
-  private async load(preserve: boolean): Promise<void> {
+  private load(preserve: boolean): Promise<void> {
+    const run = this.runLoad(preserve);
+    this.latestLoad = run;
+    return this.settle(run);
+  }
+
+  private async settle(run: Promise<void>): Promise<void> {
+    await run;
+    if (this.latestLoad !== run) {
+      await this.settle(this.latestLoad);
+    }
+  }
+
+  private async runLoad(preserve: boolean): Promise<void> {
     const generation = ++this.generation;
     this.loadingMore = undefined;
     const repository = this.repoManager.activeRepository;

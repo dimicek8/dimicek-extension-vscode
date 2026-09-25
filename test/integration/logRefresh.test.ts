@@ -58,6 +58,17 @@ describe('Git Log refresh', () => {
     }
   });
 
+  it('waits for a newer load when its own load is superseded', async () => {
+    let newerDone = false;
+    const first = api.log.model.reload();
+    const newer = api.log.model.reload();
+    void newer.then(() => {
+      newerDone = true;
+    });
+    await first;
+    assert.strictEqual(newerDone, true);
+  });
+
   it('jumps to the top when filters change', async () => {
     const update = waitFor(api.log.model.onDidUpdate, (value: LogUpdate) => value.kind === 'reset');
     await api.log.model.setFilters({ author: 'Test' });
