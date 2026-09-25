@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
+import { parseRecentCheckouts } from './parsers/reflog';
 import { parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
@@ -13,7 +14,7 @@ export interface CommitRequest {
   amend?: boolean;
 }
 
-const PUSH_TIMEOUT_MS = 5 * 60_000;
+const NETWORK_TIMEOUT_MS = 5 * 60_000;
 
 export type OperationKind = 'merge' | 'rebase' | 'cherryPick' | 'revert';
 
@@ -217,7 +218,7 @@ export class Repository {
         throw new Error('Cannot push: HEAD is detached.');
       }
       if (branch.upstream) {
-        await this.run(['push'], signal, { timeoutMs: PUSH_TIMEOUT_MS });
+        await this.run(['push'], signal, { timeoutMs: NETWORK_TIMEOUT_MS });
         return;
       }
       const remotes = await this.getRemotes(signal);
@@ -229,8 +230,108 @@ export class Repository {
         );
       }
       await this.run(['push', '--set-upstream', remotes[0]!, branch.head], signal, {
-        timeoutMs: PUSH_TIMEOUT_MS,
+        timeoutMs: NETWORK_TIMEOUT_MS,
       });
+    });
+  }
+
+  async getRecentCheckouts(signal?: AbortSignal): Promise<string[]> {
+    try {
+      return parseRecentCheckouts(
+        await this.run(['reflog', 'show', '--format=%gs', '-n', '500', 'HEAD', '--'], signal),
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  async isValidBranchName(name: string): Promise<boolean> {
+    try {
+      await this.run(['check-ref-format', '--branch', name]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async revisionExists(revision: string): Promise<boolean> {
+    try {
+      await this.run([
+        'rev-parse',
+        '--verify',
+        '--quiet',
+        '--end-of-options',
+        `${revision}^{commit}`,
+      ]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  fetch(signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['fetch', '--all', '--prune'], signal, { timeoutMs: NETWORK_TIMEOUT_MS });
+    });
+  }
+
+  switchBranch(name: string, options: { force?: boolean } = {}): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['switch', ...(options.force ? ['--discard-changes'] : []), '--', name]);
+    });
+  }
+
+  switchToRemoteBranch(
+    remoteBranch: string,
+    localName: string,
+    options: { force?: boolean } = {},
+  ): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run([
+        'switch',
+        ...(options.force ? ['--discard-changes'] : []),
+        '--create',
+        localName,
+        '--track',
+        remoteBranch,
+      ]);
+    });
+  }
+
+  switchDetached(revision: string, options: { force?: boolean } = {}): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run([
+        'switch',
+        '--detach',
+        ...(options.force ? ['--discard-changes'] : []),
+        '--end-of-options',
+        revision,
+      ]);
+    });
+  }
+
+  createBranch(
+    name: string,
+    startPoint: string,
+    options: { checkout: boolean; force?: boolean },
+  ): Promise<void> {
+    return this.exclusive(async () => {
+      const args = options.checkout
+        ? ['switch', ...(options.force ? ['--discard-changes'] : []), '--create', name, startPoint]
+        : ['branch', '--', name, startPoint];
+      await this.run(args);
+    });
+  }
+
+  stash(message: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'push', '--include-untracked', '--message', message]);
+    });
+  }
+
+  stashPop(): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'pop']);
     });
   }
 }

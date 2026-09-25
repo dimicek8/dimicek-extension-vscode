@@ -18,7 +18,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const repoManager = await RepoManager.create(output);
     context.subscriptions.push(repoManager);
     const commit = registerCommitFeature(context, repoManager, output);
-    const branches = registerBranchesFeature(context, commit.model);
+    const branches = registerBranchesFeature(context, commit.model, output);
     return { repoManager, commit, branches };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

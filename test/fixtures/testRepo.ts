@@ -96,6 +96,7 @@ export class TestRepo {
 
 export interface HistoryRepo {
   repo: TestRepo;
+  other: TestRepo;
   commits: {
     initial: string;
     app: string;
@@ -142,7 +143,7 @@ export function createHistoryRepo(): HistoryRepo {
   repo.git('fetch', '--quiet', '--prune', 'origin');
   const local = repo.commit('Local change', { 'LOCAL.md': 'local\n' });
 
-  return { repo, commits: { initial, app, login, logout, typo, merge, local, remote } };
+  return { repo, other, commits: { initial, app, login, logout, typo, merge, local, remote } };
 }
 
 export function addWorkingTreeChanges(repo: TestRepo): void {

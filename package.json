@@ -90,6 +90,28 @@
         "title": "Delete…",
         "category": "Dimicek",
         "icon": "$(trash)"
+      },
+      {
+        "command": "dimicek.branches.show",
+        "title": "Branches…",
+        "category": "Dimicek",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "dimicek.branches.newBranch",
+        "title": "New Branch…",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.branches.checkoutRevision",
+        "title": "Checkout Tag or Revision…",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.branches.fetch",
+        "title": "Fetch",
+        "category": "Dimicek",
+        "icon": "$(sync)"
       }
     ],
     "viewsContainers": {
@@ -142,6 +164,11 @@
           "command": "dimicek.changes.showFlat",
           "when": "view == dimicek.changes && dimicek.changes.groupedByDirectory",
           "group": "navigation@1"
+        },
+        {
+          "command": "dimicek.branches.show",
+          "when": "view == dimicek.changes",
+          "group": "navigation@0"
         }
       ],
       "commandPalette": [
@@ -180,6 +207,22 @@
         {
           "command": "dimicek.changes.delete",
           "when": "false"
+        },
+        {
+          "command": "dimicek.branches.show",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.branches.newBranch",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.branches.checkoutRevision",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.branches.fetch",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [
