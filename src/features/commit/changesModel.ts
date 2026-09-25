@@ -11,6 +11,7 @@ export class ChangesModel implements vscode.Disposable {
   private currentBranch: BranchStatus = {};
   private currentInclusion = new Inclusion();
   private pending: AbortController | undefined;
+  private latestRefresh: Promise<void> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
 
   private readonly changeEmitter = new vscode.EventEmitter<void>();
@@ -56,7 +57,20 @@ export class ChangesModel implements vscode.Disposable {
     this.changeEmitter.fire();
   }
 
-  async refresh(): Promise<void> {
+  refresh(): Promise<void> {
+    const run = this.runRefresh();
+    this.latestRefresh = run;
+    return this.settle(run);
+  }
+
+  private async settle(run: Promise<void>): Promise<void> {
+    await run;
+    if (this.latestRefresh !== run) {
+      await this.settle(this.latestRefresh);
+    }
+  }
+
+  private async runRefresh(): Promise<void> {
     this.pending?.abort();
     const controller = new AbortController();
     this.pending = controller;

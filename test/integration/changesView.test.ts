@@ -154,6 +154,17 @@ describe('Changes view', () => {
     });
   });
 
+  it('waits for a newer refresh when its own refresh is superseded', async () => {
+    let newerDone = false;
+    const first = commit.model.refresh();
+    const newer = commit.model.refresh();
+    void newer.then(() => {
+      newerDone = true;
+    });
+    await first;
+    assert.strictEqual(newerDone, true);
+  });
+
   it('exposes the current branch with ahead and behind counts', () => {
     const { head, ahead, behind } = commit.model.branch;
     assert.deepStrictEqual({ head, ahead, behind }, { head: 'main', ahead: 1, behind: 1 });
