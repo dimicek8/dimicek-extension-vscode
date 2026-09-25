@@ -78,9 +78,9 @@ describe('Branches popup', () => {
   });
 
   it('toggles favorites', async () => {
-    await api.branches.favorites.toggle(fixture.repo.root, 'refs/heads/gone');
+    await api.branches.favorites.toggle(api.commit.model.repository!.root, 'refs/heads/gone');
     assert.deepStrictEqual(section(await entries(), 'Local').slice(0, 2), ['gone', 'main']);
-    await api.branches.favorites.toggle(fixture.repo.root, 'refs/heads/gone');
+    await api.branches.favorites.toggle(api.commit.model.repository!.root, 'refs/heads/gone');
   });
 
   it('checks out a local branch and lists it first among recent branches', async () => {
