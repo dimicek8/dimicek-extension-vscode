@@ -1,6 +1,8 @@
 import * as assert from 'node:assert';
+import { join } from 'node:path';
 import * as vscode from 'vscode';
 import type { DimicekApi } from '../../src/extension';
+import type { TestRepo } from '../fixtures/testRepo';
 
 export const EXTENSION_ID = 'dimicek.dimicek';
 
@@ -41,4 +43,21 @@ export async function waitUntil<T>(
   }
   await waitFor(event, () => check() !== undefined, timeoutMs);
   return check()!;
+}
+
+export type ReadyApi = { [K in keyof DimicekApi]-?: NonNullable<DimicekApi[K]> };
+
+export async function activateWithRepository(repo: TestRepo): Promise<ReadyApi> {
+  const api = await activateExtension();
+  assert.ok(api.repoManager && api.commit && api.branches, 'Extension failed to initialize');
+  const { repoManager, commit } = api;
+  const rootUri = vscode.Uri.file(repo.root);
+  await repoManager.gitApi.openRepository(rootUri);
+  await waitUntil(() => repoManager.getRepository(rootUri), repoManager.onDidChangeRepositories);
+  await vscode.window.showTextDocument(vscode.Uri.file(join(repo.root, 'README.md')));
+  await waitUntil(
+    () => (commit.model.repository?.root === rootUri.fsPath ? true : undefined),
+    commit.model.onDidChange,
+  );
+  return api as ReadyApi;
 }

@@ -1,3 +1,5 @@
+import { access, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
@@ -13,8 +15,22 @@ export interface CommitRequest {
 
 const PUSH_TIMEOUT_MS = 5 * 60_000;
 
+export type OperationKind = 'merge' | 'rebase' | 'cherryPick' | 'revert';
+
+export interface OperationState {
+  kind: OperationKind;
+  branch?: string;
+}
+
+const exists = (path: string) =>
+  access(path).then(
+    () => true,
+    () => false,
+  );
+
 export class Repository {
   private writeQueue: Promise<unknown> = Promise.resolve();
+  private gitDir: Promise<string> | undefined;
 
   constructor(
     readonly root: string,
@@ -108,6 +124,44 @@ export class Repository {
     return this.exclusive(async () => {
       await this.run(['add', '--', ...paths]);
     });
+  }
+
+  getGitDir(): Promise<string> {
+    this.gitDir ??= this.run(['rev-parse', '--absolute-git-dir']).then(
+      (output) => output.trim(),
+      (error: unknown) => {
+        this.gitDir = undefined;
+        throw error;
+      },
+    );
+    return this.gitDir;
+  }
+
+  async getOperationState(): Promise<OperationState | undefined> {
+    const gitDir = await this.getGitDir();
+    for (const directory of ['rebase-merge', 'rebase-apply']) {
+      if (await exists(join(gitDir, directory))) {
+        const headName = await readFile(join(gitDir, directory, 'head-name'), 'utf8').catch(
+          () => '',
+        );
+        const branch = headName.trim().replace(/^refs\/heads\//, '');
+        return {
+          kind: 'rebase',
+          branch: branch && branch !== 'detached HEAD' ? branch : undefined,
+        };
+      }
+    }
+    const markers: Array<[string, OperationKind]> = [
+      ['MERGE_HEAD', 'merge'],
+      ['CHERRY_PICK_HEAD', 'cherryPick'],
+      ['REVERT_HEAD', 'revert'],
+    ];
+    for (const [file, kind] of markers) {
+      if (await exists(join(gitDir, file))) {
+        return { kind };
+      }
+    }
+    return undefined;
   }
 
   async isMerging(signal?: AbortSignal): Promise<boolean> {
