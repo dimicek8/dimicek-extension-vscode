@@ -19,6 +19,15 @@ const NETWORK_TIMEOUT_MS = 5 * 60_000;
 
 export type OperationKind = 'merge' | 'rebase' | 'cherryPick' | 'revert';
 
+export type ResetMode = 'soft' | 'mixed' | 'hard' | 'keep';
+
+const OPERATION_COMMANDS: Record<OperationKind, string> = {
+  merge: 'merge',
+  rebase: 'rebase',
+  cherryPick: 'cherry-pick',
+  revert: 'revert',
+};
+
 export interface OperationState {
   kind: OperationKind;
   branch?: string;
@@ -287,22 +296,76 @@ export class Repository {
     });
   }
 
-  continueRebase(): Promise<void> {
+  continueOperation(kind: Exclude<OperationKind, 'merge'>): Promise<void> {
     return this.exclusive(async () => {
-      await this.run(['rebase', '--continue'], undefined, { env: { GIT_EDITOR: 'true' } });
+      await this.run([OPERATION_COMMANDS[kind], '--continue'], undefined, {
+        env: { GIT_EDITOR: 'true' },
+      });
     });
+  }
+
+  abortOperation(kind: OperationKind): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run([OPERATION_COMMANDS[kind], '--abort']);
+    });
+  }
+
+  continueRebase(): Promise<void> {
+    return this.continueOperation('rebase');
   }
 
   abortRebase(): Promise<void> {
-    return this.exclusive(async () => {
-      await this.run(['rebase', '--abort']);
-    });
+    return this.abortOperation('rebase');
   }
 
   abortMerge(): Promise<void> {
+    return this.abortOperation('merge');
+  }
+
+  cherryPick(hash: string): Promise<void> {
     return this.exclusive(async () => {
-      await this.run(['merge', '--abort']);
+      await this.run(['cherry-pick', '--end-of-options', hash]);
     });
+  }
+
+  revert(hash: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['revert', '--no-edit', '--end-of-options', hash]);
+    });
+  }
+
+  reset(revision: string, mode: ResetMode): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['reset', `--${mode}`, '--end-of-options', revision]);
+    });
+  }
+
+  async isValidTagName(name: string): Promise<boolean> {
+    try {
+      await this.run(['check-ref-format', `refs/tags/${name}`]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  createTag(name: string, revision: string, message?: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(
+        message
+          ? ['tag', '--annotate', '--message', message, name, revision]
+          : ['tag', name, revision],
+      );
+    });
+  }
+
+  async diffWithWorkingTree(revision: string, signal?: AbortSignal): Promise<NameStatusEntry[]> {
+    return parseNameStatus(
+      await this.run(
+        ['diff', '--name-status', '-z', '-M', '--end-of-options', revision, '--'],
+        signal,
+      ),
+    );
   }
 
   renameBranch(oldName: string, newName: string): Promise<void> {

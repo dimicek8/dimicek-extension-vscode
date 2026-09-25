@@ -2,7 +2,16 @@ import type { LocalBranch, Ref, RemoteBranch } from '../../git/parsers/refs';
 import type { OperationKind } from '../../git/repository';
 
 export type BranchCommand =
-  'newBranch' | 'checkoutRevision' | 'fetch' | 'abortMerge' | 'continueRebase' | 'abortRebase';
+  | 'newBranch'
+  | 'checkoutRevision'
+  | 'fetch'
+  | 'abortMerge'
+  | 'continueRebase'
+  | 'abortRebase'
+  | 'continueCherryPick'
+  | 'abortCherryPick'
+  | 'continueRevert'
+  | 'abortRevert';
 
 export type BranchRef = LocalBranch | RemoteBranch;
 
@@ -38,6 +47,24 @@ const OPERATION_COMMANDS: Partial<Record<OperationKind, BranchEntry[]>> = {
       icon: 'debug-continue',
     },
     { kind: 'command', command: 'abortRebase', label: 'Abort Rebase', icon: 'close' },
+  ],
+  cherryPick: [
+    {
+      kind: 'command',
+      command: 'continueCherryPick',
+      label: 'Continue Cherry-Pick',
+      icon: 'debug-continue',
+    },
+    { kind: 'command', command: 'abortCherryPick', label: 'Abort Cherry-Pick', icon: 'close' },
+  ],
+  revert: [
+    {
+      kind: 'command',
+      command: 'continueRevert',
+      label: 'Continue Revert',
+      icon: 'debug-continue',
+    },
+    { kind: 'command', command: 'abortRevert', label: 'Abort Revert', icon: 'close' },
   ],
 };
 

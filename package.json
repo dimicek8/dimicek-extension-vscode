@@ -129,6 +129,54 @@
         "title": "Refresh Log",
         "category": "Dimicek",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "dimicek.log.copyRevision",
+        "title": "Copy Revision Number",
+        "category": "Dimicek",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "dimicek.log.newBranch",
+        "title": "New Branch…",
+        "category": "Dimicek",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "dimicek.log.newTag",
+        "title": "New Tag…",
+        "category": "Dimicek",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "dimicek.log.checkoutRevision",
+        "title": "Checkout Revision",
+        "category": "Dimicek",
+        "icon": "$(check)"
+      },
+      {
+        "command": "dimicek.log.cherryPick",
+        "title": "Cherry-Pick",
+        "category": "Dimicek",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "dimicek.log.revert",
+        "title": "Revert Commit",
+        "category": "Dimicek",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "dimicek.log.reset",
+        "title": "Reset Current Branch to Here…",
+        "category": "Dimicek",
+        "icon": "$(history)"
+      },
+      {
+        "command": "dimicek.log.compareWithLocal",
+        "title": "Compare with Local",
+        "category": "Dimicek",
+        "icon": "$(git-compare)"
       }
     ],
     "viewsContainers": {
@@ -271,6 +319,38 @@
         {
           "command": "dimicek.log.refresh",
           "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.log.copyRevision",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.newBranch",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.newTag",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.checkoutRevision",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.cherryPick",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.revert",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.reset",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.compareWithLocal",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -323,6 +403,48 @@
           "command": "dimicek.changes.markResolved",
           "when": "view == dimicek.changes && viewItem =~ /^(file:conflicted|group:conflicts|directory:conflicts)$/",
           "group": "1_modification@0"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "dimicek.log.copyRevision",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "1_copy@1"
+        },
+        {
+          "command": "dimicek.log.newBranch",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "2_create@1"
+        },
+        {
+          "command": "dimicek.log.newTag",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "2_create@2"
+        },
+        {
+          "command": "dimicek.log.checkoutRevision",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "3_checkout@1"
+        },
+        {
+          "command": "dimicek.log.cherryPick",
+          "when": "webviewId == dimicek.log && webviewSection == commit && !merge",
+          "group": "4_apply@1"
+        },
+        {
+          "command": "dimicek.log.revert",
+          "when": "webviewId == dimicek.log && webviewSection == commit && !merge",
+          "group": "4_apply@2"
+        },
+        {
+          "command": "dimicek.log.reset",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "5_reset@1"
+        },
+        {
+          "command": "dimicek.log.compareWithLocal",
+          "when": "webviewId == dimicek.log && webviewSection == commit",
+          "group": "6_compare@1"
         }
       ]
     },

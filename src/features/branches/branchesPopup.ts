@@ -139,6 +139,14 @@ export class BranchesPopup {
         return this.operations.continueRebase();
       case 'abortRebase':
         return this.operations.abortRebase();
+      case 'continueCherryPick':
+        return this.operations.continueCherryPick();
+      case 'abortCherryPick':
+        return this.operations.abortCherryPick();
+      case 'continueRevert':
+        return this.operations.continueRevert();
+      case 'abortRevert':
+        return this.operations.abortRevert();
     }
   }
 

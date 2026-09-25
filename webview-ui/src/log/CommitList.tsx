@@ -88,6 +88,12 @@ export function CommitList({
                 role="option"
                 aria-selected={isSelected}
                 className={`log__row log__commit${isSelected ? ' log__commit--selected' : ''}${commit.isHead ? ' log__commit--head' : ''}`}
+                data-vscode-context={JSON.stringify({
+                  webviewSection: 'commit',
+                  hash: commit.hash,
+                  merge: commit.parents.length > 1,
+                  preventDefaultContextMenuItems: true,
+                })}
                 style={{ transform: `translateY(${item.start}px)` }}
                 onMouseDown={() => onSelect(commit.hash)}
               >

@@ -1,30 +1,22 @@
-import { basename, dirname } from 'node:path';
 import * as vscode from 'vscode';
 import { GitError } from '../../git/gitError';
-import type { NameStatusEntry } from '../../git/parsers/nameStatus';
 import type { LocalBranch } from '../../git/parsers/refs';
 import type { Repository } from '../../git/repository';
-import { toEmptyUri, toGitUri } from '../../vscode/gitContentProvider';
+import { showFileComparison } from '../fileComparison';
 import type { ChangesModel } from '../commit/changesModel';
+import {
+  type Choose,
+  continueOnConflict,
+  errorMessage,
+  modalChoose,
+  runOperation,
+} from '../operations';
 import type { BranchRef } from './branchEntries';
-
-export type Choose = (
-  message: string,
-  detail: string,
-  options: string[],
-) => Thenable<string | undefined>;
-
-const modalChoose: Choose = (message, detail, options) =>
-  vscode.window.showWarningMessage(message, { modal: true, detail }, ...options);
 
 type SwitchAction = (options: { force?: boolean }) => Promise<void>;
 
 const SMART_CHECKOUT = 'Smart Checkout';
 const FORCE_CHECKOUT = 'Force Checkout';
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 export class BranchOperations {
   choose: Choose = modalChoose;
@@ -34,28 +26,11 @@ export class BranchOperations {
     private readonly output: vscode.LogOutputChannel,
   ) {}
 
-  private async perform(
+  private perform(
     title: string,
     operation: (repository: Repository) => Promise<boolean | void>,
   ): Promise<boolean> {
-    const repository = this.model.repository;
-    if (!repository) {
-      void vscode.window.showWarningMessage('No Git repository is open.');
-      return false;
-    }
-    try {
-      const result = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Window, title },
-        () => operation(repository),
-      );
-      return result !== false;
-    } catch (error) {
-      this.output.error(`${title} failed: ${errorMessage(error)}`);
-      void vscode.window.showErrorMessage(`${title} failed: ${errorMessage(error)}`);
-      return false;
-    } finally {
-      await this.model.refresh();
-    }
+    return runOperation(this.model, this.output, title, operation);
   }
 
   private async switchWith(
@@ -213,24 +188,10 @@ export class BranchOperations {
     }
     return this.checkoutRevision(revision);
   }
-  private async withConflictHandling(
-    operation: () => Promise<void>,
-    conflictMessage: string,
-  ): Promise<void> {
-    try {
-      await operation();
-    } catch (error) {
-      if (error instanceof GitError && error.code === 'Conflict') {
-        void vscode.window.showWarningMessage(conflictMessage);
-        return;
-      }
-      throw error;
-    }
-  }
 
   merge(ref: BranchRef, currentName: string): Promise<boolean> {
     return this.perform(`Merging ${ref.name} into ${currentName}…`, (repository) =>
-      this.withConflictHandling(
+      continueOnConflict(
         () => repository.merge(ref.name),
         `Merging '${ref.name}' stopped because of conflicts. Resolve them in the Changes view and commit, or choose Abort Merge in the branches popup.`,
       ),
@@ -239,7 +200,7 @@ export class BranchOperations {
 
   rebaseCurrentOnto(ref: BranchRef, currentName: string): Promise<boolean> {
     return this.perform(`Rebasing ${currentName} onto ${ref.name}…`, (repository) =>
-      this.withConflictHandling(
+      continueOnConflict(
         () => repository.rebase(ref.name),
         `Rebasing '${currentName}' stopped because of conflicts. Resolve them, mark the files as resolved and choose Continue Rebase in the branches popup.`,
       ),
@@ -248,7 +209,7 @@ export class BranchOperations {
 
   checkoutAndRebase(ref: LocalBranch, currentName: string): Promise<boolean> {
     return this.perform(`Rebasing ${ref.name} onto ${currentName}…`, (repository) =>
-      this.withConflictHandling(
+      continueOnConflict(
         () => repository.rebase(currentName, ref.name),
         `Rebasing '${ref.name}' stopped because of conflicts. Resolve them, mark the files as resolved and choose Continue Rebase in the branches popup.`,
       ),
@@ -256,7 +217,32 @@ export class BranchOperations {
   }
 
   continueRebase(): Promise<boolean> {
-    return this.perform('Continuing rebase…', async (repository) => {
+    return this.continueOperation('rebase', 'rebase');
+  }
+
+  continueCherryPick(): Promise<boolean> {
+    return this.continueOperation('cherryPick', 'cherry-pick');
+  }
+
+  continueRevert(): Promise<boolean> {
+    return this.continueOperation('revert', 'revert');
+  }
+
+  abortCherryPick(): Promise<boolean> {
+    return this.perform('Aborting cherry-pick…', (repository) =>
+      repository.abortOperation('cherryPick'),
+    );
+  }
+
+  abortRevert(): Promise<boolean> {
+    return this.perform('Aborting revert…', (repository) => repository.abortOperation('revert'));
+  }
+
+  private continueOperation(
+    kind: 'rebase' | 'cherryPick' | 'revert',
+    name: string,
+  ): Promise<boolean> {
+    return this.perform(`Continuing ${name}…`, async (repository) => {
       const { entries } = await repository.getStatus();
       if (entries.some((entry) => entry.kind === 'conflicted')) {
         void vscode.window.showWarningMessage(
@@ -264,9 +250,9 @@ export class BranchOperations {
         );
         return false;
       }
-      await this.withConflictHandling(
-        () => repository.continueRebase(),
-        'The next commit of the rebase has conflicts too. Resolve them and choose Continue Rebase again.',
+      await continueOnConflict(
+        () => repository.continueOperation(kind),
+        `The next commit of the ${name} has conflicts too. Resolve them and continue again.`,
       );
       return true;
     });
@@ -292,7 +278,7 @@ export class BranchOperations {
 
   update(branch: LocalBranch): Promise<boolean> {
     return this.perform(`Updating ${branch.name}…`, (repository) =>
-      this.withConflictHandling(
+      continueOnConflict(
         () => repository.update(branch.name),
         `Updating '${branch.name}' stopped because of conflicts. Resolve them in the Changes view and commit, or choose Abort Merge in the branches popup.`,
       ),
@@ -382,45 +368,12 @@ export class BranchOperations {
       );
       return;
     }
-    const quickPick = vscode.window.createQuickPick<
-      vscode.QuickPickItem & { file: NameStatusEntry }
-    >();
-    quickPick.title = `Compare '${currentName}' with '${ref.name}' — ${counts.ahead} commits only in '${ref.name}', ${counts.behind} only in '${currentName}'`;
-    quickPick.placeholder = 'Select a file to see its diff (Esc to close)';
-    quickPick.ignoreFocusOut = true;
-    quickPick.matchOnDescription = true;
-    quickPick.items = files.map((file) => ({
-      label: basename(file.path),
-      description: file.originalPath
-        ? `${file.originalPath} → ${file.path}`
-        : dirname(file.path) === '.'
-          ? undefined
-          : dirname(file.path),
-      detail: file.status,
-      file,
-    }));
-    quickPick.onDidAccept(() => {
-      const file = quickPick.selectedItems[0]?.file;
-      if (!file) {
-        return;
-      }
-      const left =
-        file.status === 'added'
-          ? toEmptyUri(repository.root, file.path)
-          : toGitUri(repository.root, file.originalPath ?? file.path, currentName);
-      const right =
-        file.status === 'deleted'
-          ? toEmptyUri(repository.root, file.path)
-          : toGitUri(repository.root, file.path, ref.name);
-      void vscode.commands.executeCommand(
-        'vscode.diff',
-        left,
-        right,
-        `${basename(file.path)} (${currentName} ↔ ${ref.name})`,
-        { preview: true, preserveFocus: true },
-      );
+    showFileComparison({
+      root: repository.root,
+      title: `Compare '${currentName}' with '${ref.name}' — ${counts.ahead} commits only in '${ref.name}', ${counts.behind} only in '${currentName}'`,
+      left: currentName,
+      right: ref.name,
+      files,
     });
-    quickPick.onDidHide(() => quickPick.dispose());
-    quickPick.show();
   }
 }
