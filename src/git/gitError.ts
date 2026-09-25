@@ -8,6 +8,7 @@ export type GitErrorCode =
   | 'PushRejected'
   | 'AuthenticationFailed'
   | 'RepositoryLocked'
+  | 'BranchNotFullyMerged'
   | 'Unknown';
 
 export interface GitErrorInit {
@@ -39,6 +40,7 @@ export class GitError extends Error {
 
 const STDERR_PATTERNS: ReadonlyArray<[RegExp, GitErrorCode]> = [
   [/not a git repository/i, 'NotARepository'],
+  [/is not fully merged/i, 'BranchNotFullyMerged'],
   [/index\.lock': File exists|Unable to create '.*\.lock'/i, 'RepositoryLocked'],
   [
     /would be overwritten by (merge|checkout)|Please commit your changes or stash them/i,

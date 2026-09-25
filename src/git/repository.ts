@@ -4,7 +4,8 @@ import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRecentCheckouts } from './parsers/reflog';
-import { parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
+import { type NameStatusEntry, parseNameStatus } from './parsers/nameStatus';
+import { type LocalBranch, parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
 export interface CommitRequest {
@@ -47,7 +48,7 @@ export class Repository {
   private async run(
     args: string[],
     signal?: AbortSignal,
-    options: { input?: string; timeoutMs?: number } = {},
+    options: { input?: string; timeoutMs?: number; env?: Record<string, string> } = {},
   ): Promise<string> {
     const { stdout } = await this.git.exec(args, { cwd: this.root, signal, ...options });
     return stdout;
@@ -211,14 +212,31 @@ export class Repository {
     });
   }
 
-  push(signal?: AbortSignal): Promise<void> {
+  private async localBranch(name: string, signal?: AbortSignal): Promise<LocalBranch> {
+    const branch = (await this.getRefs(signal)).find(
+      (ref): ref is LocalBranch => ref.type === 'branch' && ref.name === name,
+    );
+    if (!branch) {
+      throw new Error(`Branch '${name}' does not exist.`);
+    }
+    return branch;
+  }
+
+  private async currentBranchName(signal?: AbortSignal): Promise<string> {
+    const { branch } = await this.getStatus(signal);
+    if (!branch.head) {
+      throw new Error('HEAD is detached.');
+    }
+    return branch.head;
+  }
+
+  push(branchName?: string, signal?: AbortSignal): Promise<void> {
     return this.exclusive(async () => {
-      const { branch } = await this.getStatus(signal);
-      if (!branch.head) {
-        throw new Error('Cannot push: HEAD is detached.');
-      }
-      if (branch.upstream) {
-        await this.run(['push'], signal, { timeoutMs: NETWORK_TIMEOUT_MS });
+      const name = branchName ?? (await this.currentBranchName(signal));
+      const { upstream } = await this.localBranch(name, signal);
+      const options = { timeoutMs: NETWORK_TIMEOUT_MS };
+      if (upstream && !upstream.gone && upstream.remote !== '.') {
+        await this.run(['push', upstream.remote, `${name}:${upstream.branch}`], signal, options);
         return;
       }
       const remotes = await this.getRemotes(signal);
@@ -226,13 +244,107 @@ export class Repository {
         throw new Error(
           remotes.length === 0
             ? 'Cannot push: the repository has no remote.'
-            : `Cannot push: branch "${branch.head}" has no upstream and there are several remotes.`,
+            : `Cannot push: branch '${name}' has no upstream and there are several remotes.`,
         );
       }
-      await this.run(['push', '--set-upstream', remotes[0]!, branch.head], signal, {
+      await this.run(['push', '--set-upstream', remotes[0]!, name], signal, options);
+    });
+  }
+
+  update(branchName?: string, signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      const current = (await this.getStatus(signal)).branch.head;
+      const name = branchName ?? current;
+      if (!name) {
+        throw new Error('HEAD is detached.');
+      }
+      const { upstream } = await this.localBranch(name, signal);
+      if (!upstream || upstream.gone) {
+        throw new Error(`Branch '${name}' has no upstream branch to update from.`);
+      }
+      const options = { timeoutMs: NETWORK_TIMEOUT_MS };
+      if (name === current) {
+        await this.run(['pull', '--no-rebase', '--no-edit'], signal, options);
+      } else if (upstream.remote === '.') {
+        await this.run(['fetch', '.', `${upstream.branch}:${name}`], signal, options);
+      } else {
+        await this.run(['fetch', upstream.remote, `${upstream.branch}:${name}`], signal, options);
+      }
+    });
+  }
+
+  merge(revision: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['merge', '--no-edit', '--end-of-options', revision]);
+    });
+  }
+
+  rebase(onto: string, branch?: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['rebase', '--end-of-options', onto, ...(branch ? [branch] : [])], undefined, {
+        env: { GIT_EDITOR: 'true' },
+      });
+    });
+  }
+
+  continueRebase(): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['rebase', '--continue'], undefined, { env: { GIT_EDITOR: 'true' } });
+    });
+  }
+
+  abortRebase(): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['rebase', '--abort']);
+    });
+  }
+
+  abortMerge(): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['merge', '--abort']);
+    });
+  }
+
+  renameBranch(oldName: string, newName: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['branch', '--move', oldName, newName]);
+    });
+  }
+
+  deleteBranch(name: string, options: { force?: boolean } = {}): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['branch', options.force ? '-D' : '-d', name]);
+    });
+  }
+
+  deleteRemoteBranch(remote: string, branch: string, signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['push', remote, '--delete', branch], signal, {
         timeoutMs: NETWORK_TIMEOUT_MS,
       });
     });
+  }
+
+  async diffNameStatus(from: string, to: string, signal?: AbortSignal): Promise<NameStatusEntry[]> {
+    return parseNameStatus(
+      await this.run(
+        ['diff', '--name-status', '-z', '-M', '--end-of-options', from, to, '--'],
+        signal,
+      ),
+    );
+  }
+
+  async countAheadBehind(
+    base: string,
+    other: string,
+    signal?: AbortSignal,
+  ): Promise<{ ahead: number; behind: number }> {
+    const output = await this.run(
+      ['rev-list', '--left-right', '--count', '--end-of-options', `${base}...${other}`],
+      signal,
+    );
+    const [behind = '0', ahead = '0'] = output.trim().split(/\s+/);
+    return { ahead: Number(ahead), behind: Number(behind) };
   }
 
   async getRecentCheckouts(signal?: AbortSignal): Promise<string[]> {

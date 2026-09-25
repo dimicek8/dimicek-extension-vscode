@@ -132,12 +132,12 @@ export function runGit(
       }
       settle(
         new GitError({
-          code: classifyGitError(err),
+          code: classifyGitError(`${err}\n${out}`),
           args,
           exitCode,
           stdout: out,
           stderr: err,
-          message: err.trim() || `${commandLine} exited with code ${exitCode}`,
+          message: err.trim() || out.trim() || `${commandLine} exited with code ${exitCode}`,
         }),
       );
     });
