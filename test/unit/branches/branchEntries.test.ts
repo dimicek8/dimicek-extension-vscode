@@ -112,3 +112,18 @@ describe('buildBranchEntries', () => {
     expect(outline(entries)).not.toContain('--Recent--');
   });
 });
+
+describe('buildBranchEntries during an operation', () => {
+  it('offers to abort a merge or continue and abort a rebase first', () => {
+    const base = { refs: [], recent: [], favorites: new Set<string>() };
+    expect(outline(buildBranchEntries({ ...base, operation: 'merge' })).slice(0, 2)).toEqual([
+      '>abortMerge',
+      '>newBranch',
+    ]);
+    expect(outline(buildBranchEntries({ ...base, operation: 'rebase' })).slice(0, 3)).toEqual([
+      '>continueRebase',
+      '>abortRebase',
+      '>newBranch',
+    ]);
+  });
+});

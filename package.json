@@ -112,6 +112,12 @@
         "title": "Fetch",
         "category": "Dimicek",
         "icon": "$(sync)"
+      },
+      {
+        "command": "dimicek.changes.markResolved",
+        "title": "Mark as Resolved",
+        "category": "Dimicek",
+        "icon": "$(check)"
       }
     ],
     "viewsContainers": {
@@ -223,6 +229,10 @@
         {
           "command": "dimicek.branches.fetch",
           "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.changes.markResolved",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -234,6 +244,11 @@
         {
           "command": "dimicek.changes.addToVcs",
           "when": "view == dimicek.changes && viewItem == file:unversioned",
+          "group": "inline"
+        },
+        {
+          "command": "dimicek.changes.markResolved",
+          "when": "view == dimicek.changes && viewItem == file:conflicted",
           "group": "inline"
         },
         {
@@ -265,6 +280,11 @@
           "command": "dimicek.changes.delete",
           "when": "view == dimicek.changes && viewItem =~ /^file:(modified|added|renamed|unversioned|conflicted)$/",
           "group": "2_delete@1"
+        },
+        {
+          "command": "dimicek.changes.markResolved",
+          "when": "view == dimicek.changes && viewItem =~ /^(file:conflicted|group:conflicts|directory:conflicts)$/",
+          "group": "1_modification@0"
         }
       ]
     },

@@ -1,6 +1,8 @@
 import type { LocalBranch, Ref, RemoteBranch } from '../../git/parsers/refs';
+import type { OperationKind } from '../../git/repository';
 
-export type BranchCommand = 'newBranch' | 'checkoutRevision' | 'fetch';
+export type BranchCommand =
+  'newBranch' | 'checkoutRevision' | 'fetch' | 'abortMerge' | 'continueRebase' | 'abortRebase';
 
 export type BranchRef = LocalBranch | RemoteBranch;
 
@@ -21,9 +23,23 @@ export interface BranchEntriesInput {
   refs: readonly Ref[];
   recent: readonly string[];
   favorites: ReadonlySet<string>;
+  operation?: OperationKind;
 }
 
 const MAX_RECENT = 5;
+
+const OPERATION_COMMANDS: Partial<Record<OperationKind, BranchEntry[]>> = {
+  merge: [{ kind: 'command', command: 'abortMerge', label: 'Abort Merge', icon: 'close' }],
+  rebase: [
+    {
+      kind: 'command',
+      command: 'continueRebase',
+      label: 'Continue Rebase',
+      icon: 'debug-continue',
+    },
+    { kind: 'command', command: 'abortRebase', label: 'Abort Rebase', icon: 'close' },
+  ],
+};
 
 const COMMANDS: BranchEntry[] = [
   { kind: 'command', command: 'newBranch', label: 'New Branch…', icon: 'add' },
@@ -78,7 +94,12 @@ function sortBranches<T extends BranchRef>(
   });
 }
 
-export function buildBranchEntries({ refs, recent, favorites }: BranchEntriesInput): BranchEntry[] {
+export function buildBranchEntries({
+  refs,
+  recent,
+  favorites,
+  operation,
+}: BranchEntriesInput): BranchEntry[] {
   const locals = refs.filter((ref): ref is LocalBranch => ref.type === 'branch');
   const remotes = refs.filter((ref): ref is RemoteBranch => ref.type === 'remoteBranch');
   const recentBranches = recent
@@ -86,7 +107,10 @@ export function buildBranchEntries({ refs, recent, favorites }: BranchEntriesInp
     .filter((branch): branch is LocalBranch => branch !== undefined && !branch.isHead)
     .slice(0, MAX_RECENT);
 
-  const entries: BranchEntry[] = [...COMMANDS];
+  const entries: BranchEntry[] = [
+    ...((operation && OPERATION_COMMANDS[operation]) ?? []),
+    ...COMMANDS,
+  ];
   if (recentBranches.length > 0) {
     entries.push({ kind: 'separator', label: 'Recent' });
     entries.push(...recentBranches.map((branch) => branchEntry(branch, favorites)));

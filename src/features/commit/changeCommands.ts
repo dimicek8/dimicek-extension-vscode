@@ -80,6 +80,9 @@ export function registerChangeCommands(
     register('dimicek.changes.rollback', (node, nodes) => actions.rollback(changesOf(node, nodes))),
     register('dimicek.changes.addToVcs', (node, nodes) => actions.addToVcs(changesOf(node, nodes))),
     register('dimicek.changes.ignore', ignore),
+    register('dimicek.changes.markResolved', (node, nodes) =>
+      actions.markResolved(changesOf(node, nodes)),
+    ),
     register('dimicek.changes.delete', (node, nodes) => actions.delete(changesOf(node, nodes))),
   ];
 }

@@ -2,15 +2,20 @@ import { basename } from 'node:path';
 import * as vscode from 'vscode';
 import type { ChangesModel } from '../commit/changesModel';
 import type { BranchFavorites } from './branchFavorites';
-import { type BranchEntry, type BranchRef, buildBranchEntries } from './branchEntries';
+import {
+  type BranchCommand,
+  type BranchEntry,
+  type BranchRef,
+  buildBranchEntries,
+} from './branchEntries';
 import type { BranchOperations } from './branchOperations';
 
 interface EntryItem extends vscode.QuickPickItem {
   entry?: BranchEntry;
 }
 
-interface BranchAction extends vscode.QuickPickItem {
-  run: () => Promise<unknown>;
+export interface BranchAction extends vscode.QuickPickItem {
+  run?: () => Promise<unknown>;
 }
 
 function toItem(entry: BranchEntry): EntryItem {
@@ -37,6 +42,14 @@ function toItem(entry: BranchEntry): EntryItem {
   }
 }
 
+function action(label: string, icon: string, run: () => Promise<unknown>): BranchAction {
+  return { label, iconPath: new vscode.ThemeIcon(icon), run };
+}
+
+function separator(): BranchAction {
+  return { label: '', kind: vscode.QuickPickItemKind.Separator };
+}
+
 export class BranchesPopup {
   constructor(
     private readonly model: ChangesModel,
@@ -49,11 +62,17 @@ export class BranchesPopup {
     if (!repository) {
       return [];
     }
-    const [refs, recent] = await Promise.all([
+    const [refs, recent, operation] = await Promise.all([
       repository.getRefs(),
       repository.getRecentCheckouts(),
+      repository.getOperationState().catch(() => undefined),
     ]);
-    return buildBranchEntries({ refs, recent, favorites: this.favorites.get(repository.root) });
+    return buildBranchEntries({
+      refs,
+      recent,
+      favorites: this.favorites.get(repository.root),
+      operation: operation?.kind,
+    });
   }
 
   async show(): Promise<void> {
@@ -99,45 +118,75 @@ export class BranchesPopup {
     await load();
     const entry = await accepted;
     quickPick.dispose();
-    if (entry) {
-      await this.run(entry);
+    if (entry?.kind === 'command') {
+      await this.runCommand(entry.command);
+    } else if (entry?.kind === 'branch') {
+      await this.showBranchActions(entry.ref, entry.current);
     }
   }
 
-  private async run(entry: BranchEntry): Promise<void> {
-    switch (entry.kind) {
-      case 'command': {
-        if (entry.command === 'newBranch') {
-          await this.operations.promptNewBranch('HEAD', this.model.branch.head ?? 'HEAD');
-        } else if (entry.command === 'checkoutRevision') {
-          await this.operations.promptCheckoutRevision();
-        } else {
-          await this.operations.fetch();
-        }
-        return;
-      }
-      case 'branch':
-        await this.showBranchActions(entry.ref, entry.current);
-        return;
-      case 'separator':
-        return;
+  runCommand(command: BranchCommand): Promise<unknown> {
+    switch (command) {
+      case 'newBranch':
+        return this.operations.promptNewBranch('HEAD', this.model.branch.head ?? 'HEAD');
+      case 'checkoutRevision':
+        return this.operations.promptCheckoutRevision();
+      case 'fetch':
+        return this.operations.fetch();
+      case 'abortMerge':
+        return this.operations.abortMerge();
+      case 'continueRebase':
+        return this.operations.continueRebase();
+      case 'abortRebase':
+        return this.operations.abortRebase();
     }
   }
 
   branchActions(ref: BranchRef, current: boolean): BranchAction[] {
+    const ops = this.operations;
+    const currentName = this.model.branch.head;
     const actions: BranchAction[] = [];
+
     if (!current) {
-      actions.push({
-        label: 'Checkout',
-        iconPath: new vscode.ThemeIcon('check'),
-        run: () => this.operations.checkout(ref),
-      });
+      actions.push(action('Checkout', 'check', () => ops.checkout(ref)));
     }
-    actions.push({
-      label: `New Branch from '${ref.name}'…`,
-      iconPath: new vscode.ThemeIcon('add'),
-      run: () => this.operations.promptNewBranch(ref.name, ref.name),
-    });
+    actions.push(
+      action(`New Branch from '${ref.name}'…`, 'add', () =>
+        ops.promptNewBranch(ref.name, ref.name),
+      ),
+    );
+
+    if (!current && currentName) {
+      actions.push(separator());
+      if (ref.type === 'branch') {
+        actions.push(
+          action(`Checkout and Rebase onto '${currentName}'`, 'git-pull-request', () =>
+            ops.checkoutAndRebase(ref, currentName),
+          ),
+        );
+      }
+      actions.push(
+        action(`Compare with '${currentName}'`, 'git-compare', () => ops.compare(ref, currentName)),
+        action(`Rebase '${currentName}' onto '${ref.name}'`, 'git-pull-request', () =>
+          ops.rebaseCurrentOnto(ref, currentName),
+        ),
+        action(`Merge '${ref.name}' into '${currentName}'`, 'git-merge', () =>
+          ops.merge(ref, currentName),
+        ),
+      );
+    }
+
+    actions.push(separator());
+    if (ref.type === 'branch') {
+      actions.push(action(`Push '${ref.name}'`, 'repo-push', () => ops.push(ref)));
+      if (ref.upstream && !ref.upstream.gone) {
+        actions.push(action(`Update '${ref.name}'`, 'repo-pull', () => ops.update(ref)));
+      }
+      actions.push(action('Rename…', 'edit', () => ops.promptRename(ref)));
+    }
+    if (!current) {
+      actions.push(action('Delete', 'trash', () => ops.delete(ref)));
+    }
     return actions;
   }
 
@@ -146,6 +195,6 @@ export class BranchesPopup {
       title: `Branch '${ref.name}'`,
       placeHolder: 'Choose an action',
     });
-    await picked?.run();
+    await picked?.run?.();
   }
 }

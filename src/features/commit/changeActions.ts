@@ -82,6 +82,17 @@ export class ChangeActions {
     return added;
   }
 
+  async markResolved(changes: readonly FileChange[]): Promise<boolean> {
+    const repository = this.model.repository;
+    const paths = changes
+      .filter((change) => change.kind === 'conflicted')
+      .map((change) => change.path);
+    if (!repository || paths.length === 0) {
+      return false;
+    }
+    return this.perform('Mark as Resolved', () => repository.add(paths));
+  }
+
   async ignore(patterns: readonly string[]): Promise<boolean> {
     const root = this.model.repository?.root;
     if (!root || patterns.length === 0) {
