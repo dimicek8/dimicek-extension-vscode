@@ -10,7 +10,13 @@ import { isFiltered, looksLikeHash, toLogOptions } from './logQuery';
 export const LOG_PAGE_SIZE = 500;
 
 export type LogUpdate =
-  | { kind: 'reset'; repository: Repository | undefined; commits: Commit[]; rows: GraphRow[] }
+  | {
+      kind: 'reset';
+      repository: Repository | undefined;
+      commits: Commit[];
+      rows: GraphRow[];
+      preserve: boolean;
+    }
   | { kind: 'append'; commits: Commit[]; rows: GraphRow[] }
   | { kind: 'error'; message: string };
 
@@ -24,6 +30,7 @@ export class LogModel implements vscode.Disposable {
   private branchNames: string[] = [];
   private generation = 0;
   private loadingMore: Promise<void> | undefined;
+  private fingerprint: string | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
   private readonly updateEmitter = new vscode.EventEmitter<LogUpdate>();
@@ -39,6 +46,11 @@ export class LogModel implements vscode.Disposable {
       repoManager.onDidChangeActiveRepository(() => {
         this.currentFilters = {};
         void this.reload();
+      }),
+      repoManager.onDidChangeRepository((repository) => {
+        if (repository === this.repository) {
+          void this.refresh();
+        }
       }),
     );
   }
@@ -88,14 +100,18 @@ export class LogModel implements vscode.Disposable {
     return this.reload();
   }
 
-  private async fetchPage(repository: Repository, skip: number): Promise<Commit[]> {
+  private async fetchPage(
+    repository: Repository,
+    skip: number,
+    count = this.pageSize,
+  ): Promise<Commit[]> {
     const { text } = this.currentFilters;
     if (skip === 0 && looksLikeHash(text) && (await repository.revisionExists(text.trim()))) {
       return repository.getLog({ revisions: [text.trim()], maxCount: 1 });
     }
     return repository.getLog({
       ...toLogOptions(this.currentFilters),
-      maxCount: this.pageSize + 1,
+      maxCount: count + 1,
       skip,
     });
   }
@@ -111,21 +127,44 @@ export class LogModel implements vscode.Disposable {
     return [...locals.sort(), ...remotes.sort()];
   }
 
-  async reload(): Promise<void> {
+  reload(): Promise<void> {
+    return this.load(false);
+  }
+
+  async refresh(): Promise<boolean> {
+    const repository = this.repository;
+    if (!repository || repository !== this.repoManager.activeRepository) {
+      return false;
+    }
+    const fingerprint = await repository.getHistoryFingerprint().catch(() => undefined);
+    if (fingerprint !== undefined && fingerprint === this.fingerprint) {
+      return false;
+    }
+    await this.load(true);
+    return true;
+  }
+
+  private async load(preserve: boolean): Promise<void> {
     const generation = ++this.generation;
     this.loadingMore = undefined;
     const repository = this.repoManager.activeRepository;
+    const count = preserve ? Math.max(this.pageSize, this.commits.length) : this.pageSize;
     try {
-      const [page, branches] = repository
-        ? await Promise.all([this.fetchPage(repository, 0), this.loadBranchNames(repository)])
-        : [[], []];
+      const [page, branches, fingerprint] = repository
+        ? await Promise.all([
+            this.fetchPage(repository, 0, count),
+            this.loadBranchNames(repository),
+            repository.getHistoryFingerprint().catch(() => undefined),
+          ])
+        : [[], [], undefined];
       if (generation !== this.generation) {
         return;
       }
       this.repository = repository;
+      this.fingerprint = fingerprint;
       this.branchNames = branches;
-      this.more = page.length > this.pageSize;
-      this.commits = page.slice(0, this.pageSize);
+      this.more = page.length > count;
+      this.commits = page.slice(0, count);
       this.graph = isFiltered(this.currentFilters) ? undefined : new GraphBuilder();
       this.rows = this.graphRowsFor(this.commits);
       this.updateEmitter.fire({
@@ -133,6 +172,7 @@ export class LogModel implements vscode.Disposable {
         repository,
         commits: this.commits,
         rows: this.rows,
+        preserve,
       });
     } catch (error) {
       if (generation === this.generation) {

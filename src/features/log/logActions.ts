@@ -54,7 +54,7 @@ export class LogActions {
     operation: (repository: Repository) => Promise<boolean | void>,
   ): Promise<boolean> {
     const result = await runOperation(this.changes, this.output, title, operation);
-    await this.log.reload();
+    await this.log.refresh();
     return result;
   }
 
@@ -69,7 +69,7 @@ export class LogActions {
 
   async checkoutRevision(hash: string): Promise<boolean> {
     const result = await this.branches.checkoutRevision(hash);
-    await this.log.reload();
+    await this.log.refresh();
     return result;
   }
 

@@ -33,6 +33,8 @@ export function App() {
   const [selected, setSelected] = useState<string>();
   const [details, setDetails] = useState<LogCommitDetails>();
   const [detailsError, setDetailsError] = useState<string>();
+  const [listKey, setListKey] = useState(0);
+  const selectedRef = useRef<string | undefined>(undefined);
   const [detailsWidth, setDetailsWidth] = useState(
     () => loadState<LogViewState>()?.detailsWidth ?? DEFAULT_DETAILS_WIDTH,
   );
@@ -43,9 +45,28 @@ export function App() {
   }, [detailsWidth]);
 
   useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+
+  useEffect(() => {
     const unsubscribe = messenger.onMessage((message) => {
       switch (message.type) {
-        case 'reset':
+        case 'reset': {
+          const current = selectedRef.current;
+          const keepSelection =
+            message.preserve &&
+            current !== undefined &&
+            message.commits.some((commit) => commit.hash === current);
+          if (keepSelection) {
+            messenger.post({ type: 'selectCommit', hash: current });
+          } else {
+            setSelected(undefined);
+            setDetails(undefined);
+            setDetailsError(undefined);
+          }
+          if (!message.preserve) {
+            setListKey((key) => key + 1);
+          }
           setRepository(message.repository);
           setCommits(message.commits);
           setHasMore(message.hasMore);
@@ -54,6 +75,7 @@ export function App() {
           setError(undefined);
           setInitialized(true);
           break;
+        }
         case 'append':
           setCommits((current) => [...current, ...message.commits]);
           setHasMore(message.hasMore);
@@ -131,6 +153,7 @@ export function App() {
             <div className="log__message">No commits match the filters.</div>
           ) : (
             <CommitList
+              key={listKey}
               commits={commits}
               hasMore={hasMore}
               loading={loading}

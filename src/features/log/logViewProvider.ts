@@ -94,7 +94,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     switch (message.type) {
       case 'ready':
         this.ready = true;
-        this.post(this.resetMessage());
+        this.post(this.resetMessage(false));
         this.readyEmitter.fire();
         if (!this.model.activeRepository) {
           await this.model.reload();
@@ -157,7 +157,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     await vscode.commands.executeCommand('vscode.diff', left, right, title, { preview: true });
   }
 
-  private resetMessage(): LogToWebview {
+  private resetMessage(preserve: boolean): LogToWebview {
     const repository = this.model.activeRepository;
     return {
       type: 'reset',
@@ -168,13 +168,14 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
       hasMore: this.model.hasMore,
       filters: this.model.filters,
       branches: [...this.model.branches],
+      preserve,
     };
   }
 
   private forward(update: LogUpdate): void {
     switch (update.kind) {
       case 'reset':
-        this.post(this.resetMessage());
+        this.post(this.resetMessage(update.preserve));
         break;
       case 'append':
         this.post({

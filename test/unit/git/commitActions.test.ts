@@ -85,3 +85,29 @@ describe('Repository commit actions', () => {
     ]);
   });
 });
+
+describe('Repository.getHistoryFingerprint', () => {
+  it('changes with commits, checkouts and tags but not with working tree edits', async () => {
+    const fixture = createHistoryRepo();
+    try {
+      const repository = new Repository(fixture.repo.root, new Git(await findGit([])));
+      const initial = await repository.getHistoryFingerprint();
+
+      fixture.repo.write('README.md', 'edit\n');
+      expect(await repository.getHistoryFingerprint()).toBe(initial);
+
+      fixture.repo.git('tag', 'new-tag');
+      const tagged = await repository.getHistoryFingerprint();
+      expect(tagged).not.toBe(initial);
+
+      fixture.repo.git('switch', '--quiet', '--create', 'same-commit');
+      const switched = await repository.getHistoryFingerprint();
+      expect(switched).not.toBe(tagged);
+
+      fixture.repo.commit('Another');
+      expect(await repository.getHistoryFingerprint()).not.toBe(switched);
+    } finally {
+      fixture.repo.dispose();
+    }
+  });
+});

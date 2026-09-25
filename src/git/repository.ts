@@ -86,6 +86,14 @@ export class Repository {
     return parseRefs(output, remotes);
   }
 
+  async getHistoryFingerprint(signal?: AbortSignal): Promise<string> {
+    const [refs, head] = await Promise.all([
+      this.run(['for-each-ref', '--format=%(refname) %(objectname)'], signal),
+      this.run(['rev-parse', 'HEAD', '--symbolic-full-name', 'HEAD'], signal).catch(() => ''),
+    ]);
+    return `${head}\n${refs}`;
+  }
+
   async hasCommits(signal?: AbortSignal): Promise<boolean> {
     try {
       await this.run(['rev-parse', '--verify', '--quiet', 'HEAD^{commit}'], signal);
