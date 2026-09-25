@@ -40,6 +40,13 @@ describe('Git Log', () => {
       fixture.commits.local,
     );
     assert.strictEqual(message.hasMore, false);
+
+    const merge = message.commits.find((commit) => commit.hash === fixture.commits.merge)!;
+    assert.ok(merge.graph.width >= 2);
+    assert.ok(
+      merge.graph.lines.some((line) => line.kind === 'bottom' && line.to !== merge.graph.column),
+    );
+    assert.ok(message.commits.every((commit) => commit.graph.width >= 1));
   });
 
   it('loads further pages on demand', async () => {

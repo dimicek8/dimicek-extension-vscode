@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { GraphBuilder, type GraphRow } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
 import type { Repository } from '../../git/repository';
 import type { RepoManager } from '../../vscode/repoManager';
@@ -6,13 +7,21 @@ import type { RepoManager } from '../../vscode/repoManager';
 export const LOG_PAGE_SIZE = 500;
 
 export type LogUpdate =
-  | { kind: 'reset'; repository: Repository | undefined; commits: Commit[]; hasMore: boolean }
-  | { kind: 'append'; commits: Commit[]; hasMore: boolean }
+  | {
+      kind: 'reset';
+      repository: Repository | undefined;
+      commits: Commit[];
+      rows: GraphRow[];
+      hasMore: boolean;
+    }
+  | { kind: 'append'; commits: Commit[]; rows: GraphRow[]; hasMore: boolean }
   | { kind: 'error'; message: string };
 
 export class LogModel implements vscode.Disposable {
   private repository: Repository | undefined;
   private commits: Commit[] = [];
+  private rows: GraphRow[] = [];
+  private graph = new GraphBuilder();
   private more = false;
   private generation = 0;
   private loadingMore: Promise<void> | undefined;
@@ -34,6 +43,10 @@ export class LogModel implements vscode.Disposable {
 
   get loadedCommits(): readonly Commit[] {
     return this.commits;
+  }
+
+  get graphRows(): readonly GraphRow[] {
+    return this.rows;
   }
 
   get hasMore(): boolean {
@@ -60,10 +73,13 @@ export class LogModel implements vscode.Disposable {
       this.repository = repository;
       this.more = page.length > this.pageSize;
       this.commits = page.slice(0, this.pageSize);
+      this.graph = new GraphBuilder();
+      this.rows = this.graph.add(this.commits);
       this.updateEmitter.fire({
         kind: 'reset',
         repository,
         commits: this.commits,
+        rows: this.rows,
         hasMore: this.more,
       });
     } catch (error) {
@@ -91,8 +107,10 @@ export class LogModel implements vscode.Disposable {
       }
       const commits = page.slice(0, this.pageSize);
       this.more = page.length > this.pageSize;
+      const rows = this.graph.add(commits);
       this.commits = [...this.commits, ...commits];
-      this.updateEmitter.fire({ kind: 'append', commits, hasMore: this.more });
+      this.rows = [...this.rows, ...rows];
+      this.updateEmitter.fire({ kind: 'append', commits, rows, hasMore: this.more });
     } catch (error) {
       if (generation === this.generation) {
         this.report(error);

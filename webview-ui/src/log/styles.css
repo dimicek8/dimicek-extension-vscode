@@ -100,3 +100,69 @@ body {
 .log__message--error {
   color: var(--vscode-errorForeground);
 }
+
+.log__subject {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.log__subject-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.graph {
+  flex: none;
+  overflow: visible;
+}
+
+.graph__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.graph__node {
+  fill: currentColor;
+  stroke: var(--vscode-panel-background, var(--vscode-editor-background));
+  stroke-width: 1;
+}
+
+.graph__node--merge {
+  fill: var(--vscode-panel-background, var(--vscode-editor-background));
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.graph__head {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.graph-color-0 {
+  color: var(--vscode-charts-blue, #3794ff);
+}
+.graph-color-1 {
+  color: var(--vscode-charts-green, #89d185);
+}
+.graph-color-2 {
+  color: var(--vscode-charts-orange, #d18616);
+}
+.graph-color-3 {
+  color: var(--vscode-charts-purple, #b180d7);
+}
+.graph-color-4 {
+  color: var(--vscode-charts-red, #f14c4c);
+}
+.graph-color-5 {
+  color: var(--vscode-charts-yellow, #cca700);
+}
+.graph-color-6 {
+  color: var(--vscode-terminal-ansiCyan, #29b8db);
+}
+.graph-color-7 {
+  color: var(--vscode-terminal-ansiMagenta, #bc3fbc);
+}

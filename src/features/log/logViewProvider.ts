@@ -1,11 +1,12 @@
 import { basename } from 'node:path';
 import * as vscode from 'vscode';
+import type { GraphRow } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
 import type { LogCommit, LogFromWebview, LogToWebview } from '../../shared/protocol';
 import { buildWebviewHtml, webviewOptions } from '../../vscode/webviewHtml';
 import type { LogModel, LogUpdate } from './logModel';
 
-export function toLogCommit(commit: Commit): LogCommit {
+export function toLogCommit(commit: Commit, graph: GraphRow): LogCommit {
   return {
     hash: commit.hash,
     parents: commit.parents,
@@ -14,6 +15,7 @@ export function toLogCommit(commit: Commit): LogCommit {
     authorEmail: commit.author.email,
     date: commit.authorDate.getTime(),
     isHead: commit.isHead,
+    graph,
   };
 }
 
@@ -79,7 +81,9 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     return {
       type: 'reset',
       repository: repository ? basename(repository.root) : undefined,
-      commits: this.model.loadedCommits.map(toLogCommit),
+      commits: this.model.loadedCommits.map((commit, index) =>
+        toLogCommit(commit, this.model.graphRows[index]!),
+      ),
       hasMore: this.model.hasMore,
     };
   }
@@ -92,7 +96,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
       case 'append':
         this.post({
           type: 'append',
-          commits: update.commits.map(toLogCommit),
+          commits: update.commits.map((commit, index) => toLogCommit(commit, update.rows[index]!)),
           hasMore: update.hasMore,
         });
         break;

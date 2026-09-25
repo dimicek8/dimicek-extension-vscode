@@ -1,3 +1,7 @@
+import type { GraphRow } from '../git/graph/graphBuilder';
+
+export type { GraphLine, GraphRow } from '../git/graph/graphBuilder';
+
 export interface CommitViewState {
   hasRepository: boolean;
   branch?: string;
@@ -26,6 +30,7 @@ export interface LogCommit {
   authorEmail: string;
   date: number;
   isHead: boolean;
+  graph: GraphRow;
 }
 
 export type LogToWebview =

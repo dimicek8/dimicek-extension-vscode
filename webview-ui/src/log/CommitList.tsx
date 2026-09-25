@@ -2,6 +2,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { LogCommit } from '../../../src/shared/protocol';
 import { formatCommitDate, shortHash } from './format';
+import { GraphCell } from './GraphCell';
 
 export const ROW_HEIGHT = 22;
 const LOAD_MORE_THRESHOLD = 100;
@@ -76,8 +77,16 @@ export function CommitList({ commits, hasMore, loading, onLoadMore }: CommitList
                 style={{ transform: `translateY(${item.start}px)` }}
                 onMouseDown={() => setSelected(commit.hash)}
               >
-                <span className="log__subject" title={commit.subject}>
-                  {commit.subject}
+                <span className="log__subject">
+                  <GraphCell
+                    row={commit.graph}
+                    height={ROW_HEIGHT}
+                    isHead={commit.isHead}
+                    isMerge={commit.parents.length > 1}
+                  />
+                  <span className="log__subject-text" title={commit.subject}>
+                    {commit.subject}
+                  </span>
                 </span>
                 <span className="log__author" title={commit.authorEmail}>
                   {commit.author}
