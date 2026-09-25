@@ -75,6 +75,11 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         await this.model.loadMore();
         this.post({ type: 'loading', loading: false });
         break;
+      case 'setFilters':
+        this.post({ type: 'loading', loading: true });
+        await this.model.setFilters(message.filters);
+        this.post({ type: 'loading', loading: false });
+        break;
     }
   }
 
@@ -87,6 +92,8 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         toLogCommit(commit, this.model.graphRows[index]!),
       ),
       hasMore: this.model.hasMore,
+      filters: this.model.filters,
+      branches: [...this.model.branches],
     };
   }
 
@@ -99,7 +106,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this.post({
           type: 'append',
           commits: update.commits.map((commit, index) => toLogCommit(commit, update.rows[index]!)),
-          hasMore: update.hasMore,
+          hasMore: this.model.hasMore,
         });
         break;
       case 'error':

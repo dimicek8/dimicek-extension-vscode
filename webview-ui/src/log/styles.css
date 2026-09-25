@@ -210,3 +210,41 @@ body {
 .ref--more {
   color: var(--vscode-descriptionForeground);
 }
+
+.log-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.log-app > .log {
+  flex: 1;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+}
+
+.toolbar__text {
+  width: 180px;
+}
+
+.toolbar__branch {
+  width: 200px;
+}
+
+.toolbar__author,
+.toolbar__path {
+  width: 140px;
+}
+
+.toolbar__since {
+  width: 130px;
+}

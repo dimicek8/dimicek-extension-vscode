@@ -139,7 +139,10 @@ export function buildLogArgs(options: LogOptions = {}): string[] {
     args.push(`--author=${options.author}`);
   }
   if (options.grep) {
-    args.push(`--grep=${options.grep}`, '--regexp-ignore-case');
+    args.push(`--grep=${options.grep}`);
+  }
+  if (options.author || options.grep) {
+    args.push('--regexp-ignore-case');
   }
   if (options.since) {
     args.push(`--since=${options.since.toISOString()}`);

@@ -40,10 +40,28 @@ export interface LogCommit {
   graph: GraphRow;
 }
 
+export type LogPeriod = 'day' | 'week' | 'month' | 'year';
+
+export interface LogFilters {
+  text?: string;
+  branch?: string;
+  author?: string;
+  since?: LogPeriod;
+  path?: string;
+}
+
 export type LogToWebview =
-  | { type: 'reset'; repository?: string; commits: LogCommit[]; hasMore: boolean }
+  | {
+      type: 'reset';
+      repository?: string;
+      commits: LogCommit[];
+      hasMore: boolean;
+      filters: LogFilters;
+      branches: string[];
+    }
   | { type: 'append'; commits: LogCommit[]; hasMore: boolean }
   | { type: 'loading'; loading: boolean }
   | { type: 'error'; message: string };
 
-export type LogFromWebview = { type: 'ready' } | { type: 'loadMore' };
+export type LogFromWebview =
+  { type: 'ready' } | { type: 'loadMore' } | { type: 'setFilters'; filters: LogFilters };

@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
-import type { LogCommit, LogFromWebview, LogToWebview } from '../../../src/shared/protocol';
+import { useCallback, useEffect, useState } from 'react';
+import type {
+  LogCommit,
+  LogFilters,
+  LogFromWebview,
+  LogToWebview,
+} from '../../../src/shared/protocol';
 import { createMessenger } from '../vscodeApi';
 import { CommitList } from './CommitList';
+import { LogToolbar } from './LogToolbar';
 
 const messenger = createMessenger<LogFromWebview, LogToWebview>();
 
@@ -12,6 +18,8 @@ export function App() {
   const [error, setError] = useState<string>();
   const [repository, setRepository] = useState<string>();
   const [initialized, setInitialized] = useState(false);
+  const [filters, setFilters] = useState<LogFilters>({});
+  const [branches, setBranches] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubscribe = messenger.onMessage((message) => {
@@ -20,6 +28,8 @@ export function App() {
           setRepository(message.repository);
           setCommits(message.commits);
           setHasMore(message.hasMore);
+          setFilters(message.filters);
+          setBranches(message.branches);
           setError(undefined);
           setInitialized(true);
           break;
@@ -39,19 +49,33 @@ export function App() {
     return unsubscribe;
   }, []);
 
-  if (error) {
-    return <div className="log__message log__message--error">{error}</div>;
-  }
+  const loadMore = useCallback(() => messenger.post({ type: 'loadMore' }), []);
+  const changeFilters = useCallback(
+    (next: LogFilters) => messenger.post({ type: 'setFilters', filters: next }),
+    [],
+  );
+
   if (initialized && !repository) {
     return <div className="log__message">No Git repository is open.</div>;
   }
 
   return (
-    <CommitList
-      commits={commits}
-      hasMore={hasMore}
-      loading={loading}
-      onLoadMore={() => messenger.post({ type: 'loadMore' })}
-    />
+    <div className="log-app">
+      {initialized && (
+        <LogToolbar
+          key={repository}
+          initial={filters}
+          branches={branches}
+          onChange={changeFilters}
+        />
+      )}
+      {error ? (
+        <div className="log__message log__message--error">{error}</div>
+      ) : initialized && commits.length === 0 ? (
+        <div className="log__message">No commits match the filters.</div>
+      ) : (
+        <CommitList commits={commits} hasMore={hasMore} loading={loading} onLoadMore={loadMore} />
+      )}
+    </div>
   );
 }

@@ -1,28 +1,26 @@
 import * as vscode from 'vscode';
-import { GraphBuilder, type GraphRow } from '../../git/graph/graphBuilder';
+import { GraphBuilder, type GraphRow, linearRows } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
 import type { Repository } from '../../git/repository';
+import type { LogFilters } from '../../shared/protocol';
 import type { RepoManager } from '../../vscode/repoManager';
+import { isFiltered, looksLikeHash, toLogOptions } from './logQuery';
 
 export const LOG_PAGE_SIZE = 500;
 
 export type LogUpdate =
-  | {
-      kind: 'reset';
-      repository: Repository | undefined;
-      commits: Commit[];
-      rows: GraphRow[];
-      hasMore: boolean;
-    }
-  | { kind: 'append'; commits: Commit[]; rows: GraphRow[]; hasMore: boolean }
+  | { kind: 'reset'; repository: Repository | undefined; commits: Commit[]; rows: GraphRow[] }
+  | { kind: 'append'; commits: Commit[]; rows: GraphRow[] }
   | { kind: 'error'; message: string };
 
 export class LogModel implements vscode.Disposable {
   private repository: Repository | undefined;
   private commits: Commit[] = [];
   private rows: GraphRow[] = [];
-  private graph = new GraphBuilder();
+  private graph: GraphBuilder | undefined;
   private more = false;
+  private currentFilters: LogFilters = {};
+  private branchNames: string[] = [];
   private generation = 0;
   private loadingMore: Promise<void> | undefined;
   private readonly disposables: vscode.Disposable[] = [];
@@ -37,7 +35,10 @@ export class LogModel implements vscode.Disposable {
   ) {
     this.disposables.push(
       this.updateEmitter,
-      repoManager.onDidChangeActiveRepository(() => void this.reload()),
+      repoManager.onDidChangeActiveRepository(() => {
+        this.currentFilters = {};
+        void this.reload();
+      }),
     );
   }
 
@@ -57,8 +58,40 @@ export class LogModel implements vscode.Disposable {
     return this.repository;
   }
 
-  private async fetchPage(repository: Repository, skip: number, count: number): Promise<Commit[]> {
-    return repository.getLog({ all: true, maxCount: count + 1, skip });
+  get filters(): LogFilters {
+    return this.currentFilters;
+  }
+
+  get branches(): readonly string[] {
+    return this.branchNames;
+  }
+
+  setFilters(filters: LogFilters): Promise<void> {
+    this.currentFilters = filters;
+    return this.reload();
+  }
+
+  private async fetchPage(repository: Repository, skip: number): Promise<Commit[]> {
+    const { text } = this.currentFilters;
+    if (skip === 0 && looksLikeHash(text) && (await repository.revisionExists(text.trim()))) {
+      return repository.getLog({ revisions: [text.trim()], maxCount: 1 });
+    }
+    return repository.getLog({
+      ...toLogOptions(this.currentFilters),
+      maxCount: this.pageSize + 1,
+      skip,
+    });
+  }
+
+  private graphRowsFor(commits: readonly Commit[]): GraphRow[] {
+    return this.graph ? this.graph.add(commits) : linearRows(commits.length);
+  }
+
+  private async loadBranchNames(repository: Repository): Promise<string[]> {
+    const refs = await repository.getRefs();
+    const locals = refs.filter((ref) => ref.type === 'branch').map((ref) => ref.name);
+    const remotes = refs.filter((ref) => ref.type === 'remoteBranch').map((ref) => ref.name);
+    return [...locals.sort(), ...remotes.sort()];
   }
 
   async reload(): Promise<void> {
@@ -66,21 +99,23 @@ export class LogModel implements vscode.Disposable {
     this.loadingMore = undefined;
     const repository = this.repoManager.activeRepository;
     try {
-      const page = repository ? await this.fetchPage(repository, 0, this.pageSize) : [];
+      const [page, branches] = repository
+        ? await Promise.all([this.fetchPage(repository, 0), this.loadBranchNames(repository)])
+        : [[], []];
       if (generation !== this.generation) {
         return;
       }
       this.repository = repository;
+      this.branchNames = branches;
       this.more = page.length > this.pageSize;
       this.commits = page.slice(0, this.pageSize);
-      this.graph = new GraphBuilder();
-      this.rows = this.graph.add(this.commits);
+      this.graph = isFiltered(this.currentFilters) ? undefined : new GraphBuilder();
+      this.rows = this.graphRowsFor(this.commits);
       this.updateEmitter.fire({
         kind: 'reset',
         repository,
         commits: this.commits,
         rows: this.rows,
-        hasMore: this.more,
       });
     } catch (error) {
       if (generation === this.generation) {
@@ -101,16 +136,16 @@ export class LogModel implements vscode.Disposable {
 
   private async loadNextPage(repository: Repository, generation: number): Promise<void> {
     try {
-      const page = await this.fetchPage(repository, this.commits.length, this.pageSize);
+      const page = await this.fetchPage(repository, this.commits.length);
       if (generation !== this.generation) {
         return;
       }
       const commits = page.slice(0, this.pageSize);
+      const rows = this.graphRowsFor(commits);
       this.more = page.length > this.pageSize;
-      const rows = this.graph.add(commits);
       this.commits = [...this.commits, ...commits];
       this.rows = [...this.rows, ...rows];
-      this.updateEmitter.fire({ kind: 'append', commits, rows, hasMore: this.more });
+      this.updateEmitter.fire({ kind: 'append', commits, rows });
     } catch (error) {
       if (generation === this.generation) {
         this.report(error);
