@@ -6,6 +6,7 @@ import { type CompareFeature, registerCompareFeature } from './features/compare/
 import { type FetchFeature, registerFetchFeature } from './features/fetch/fetchFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
+import { registerStashFeature, type StashFeature } from './features/stash/stashFeature';
 import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
 import { RepoManager } from './vscode/repoManager';
 
@@ -19,6 +20,7 @@ export interface DimicekApi {
   fetch: FetchFeature | undefined;
   blame: BlameFeature | undefined;
   compare: CompareFeature | undefined;
+  stash: StashFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -37,7 +39,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const fetch = registerFetchFeature(context, repoManager, output);
     const blame = registerBlameFeature(context, repoManager, output);
     const compare = registerCompareFeature(context, repoManager, output);
-    return { repoManager, commit, branches, log, push, update, fetch, blame, compare };
+    const stash = registerStashFeature(context, commit.model, output);
+    return { repoManager, commit, branches, log, push, update, fetch, blame, compare, stash };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.error(message);
@@ -52,6 +55,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       fetch: undefined,
       blame: undefined,
       compare: undefined,
+      stash: undefined,
     };
   }
 }
