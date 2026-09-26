@@ -222,6 +222,18 @@
         "command": "dimicek.log.revealCommit",
         "title": "Show Commit in Git Log",
         "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.compare.withBranch",
+        "title": "Compare with Branch…",
+        "category": "Dimicek",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "dimicek.compare.withRevision",
+        "title": "Compare with Revision…",
+        "category": "Dimicek",
+        "icon": "$(git-compare)"
       }
     ],
     "viewsContainers": {
@@ -438,6 +450,14 @@
         {
           "command": "dimicek.log.revealCommit",
           "when": "false"
+        },
+        {
+          "command": "dimicek.compare.withBranch",
+          "when": "dimicek.hasRepository && resourceScheme == file"
+        },
+        {
+          "command": "dimicek.compare.withRevision",
+          "when": "dimicek.hasRepository && resourceScheme == file"
         }
       ],
       "view/item/context": [
@@ -539,6 +559,16 @@
           "command": "dimicek.log.showHistory",
           "when": "dimicek.hasRepository && resourceScheme == file",
           "group": "7_dimicek@1"
+        },
+        {
+          "command": "dimicek.compare.withBranch",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@4"
+        },
+        {
+          "command": "dimicek.compare.withRevision",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@5"
         }
       ],
       "editor/title/context": [
@@ -556,6 +586,16 @@
           "command": "dimicek.blame.close",
           "when": "dimicek.hasRepository && resourceScheme == file && dimicek.blameActive",
           "group": "7_dimicek@2"
+        },
+        {
+          "command": "dimicek.compare.withBranch",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@4"
+        },
+        {
+          "command": "dimicek.compare.withRevision",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@5"
         }
       ],
       "editor/context": [
@@ -578,6 +618,16 @@
           "command": "dimicek.blame.showCommitOfLine",
           "when": "dimicek.hasRepository && resourceScheme == file",
           "group": "9_dimicek@3"
+        },
+        {
+          "command": "dimicek.compare.withBranch",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "9_dimicek@4"
+        },
+        {
+          "command": "dimicek.compare.withRevision",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "9_dimicek@5"
         }
       ]
     },

@@ -3,6 +3,11 @@ import { join } from 'node:path';
 import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
 import { type BlameLine, parseBlame } from './parsers/blame';
+import {
+  FILE_REVISIONS_FORMAT,
+  type FileRevision,
+  parseFileRevisions,
+} from './parsers/fileRevisions';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRecentCheckouts } from './parsers/reflog';
 import { type NameStatusEntry, parseNameStatus } from './parsers/nameStatus';
@@ -388,13 +393,47 @@ export class Repository {
     });
   }
 
-  async diffWithWorkingTree(revision: string, signal?: AbortSignal): Promise<NameStatusEntry[]> {
+  async diffWithWorkingTree(
+    revision: string,
+    paths: readonly string[] = [],
+    signal?: AbortSignal,
+  ): Promise<NameStatusEntry[]> {
     return parseNameStatus(
       await this.run(
-        ['diff', '--name-status', '-z', '-M', '--end-of-options', revision, '--'],
+        ['diff', '--name-status', '-z', '-M', '--end-of-options', revision, '--', ...paths],
         signal,
       ),
     );
+  }
+
+  async pathExistsAt(revision: string, path: string, signal?: AbortSignal): Promise<boolean> {
+    try {
+      await this.run(['cat-file', '-e', `${revision}:${path}`], signal);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getFileRevisions(
+    path: string,
+    maxCount = 500,
+    signal?: AbortSignal,
+  ): Promise<FileRevision[]> {
+    const output = await this.run(
+      [
+        'log',
+        '--follow',
+        `--format=${FILE_REVISIONS_FORMAT}`,
+        '--name-only',
+        '-z',
+        `--max-count=${maxCount}`,
+        '--',
+        path,
+      ],
+      signal,
+    );
+    return parseFileRevisions(output, path);
   }
 
   renameBranch(oldName: string, newName: string): Promise<void> {
