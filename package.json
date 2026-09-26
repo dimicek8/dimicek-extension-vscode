@@ -335,6 +335,18 @@
         "title": "Delete Tag…",
         "category": "Dimicek",
         "icon": "$(trash)"
+      },
+      {
+        "command": "dimicek.github.createPullRequest",
+        "title": "Create Pull Request…",
+        "category": "Dimicek",
+        "icon": "$(git-pull-request-create)"
+      },
+      {
+        "command": "dimicek.github.pullRequests",
+        "title": "Pull Requests…",
+        "category": "Dimicek",
+        "icon": "$(git-pull-request)"
       }
     ],
     "viewsContainers": {
@@ -647,6 +659,14 @@
         {
           "command": "dimicek.tags.deleteOne",
           "when": "false"
+        },
+        {
+          "command": "dimicek.github.createPullRequest",
+          "when": "dimicek.hasGitHubRemote"
+        },
+        {
+          "command": "dimicek.github.pullRequests",
+          "when": "dimicek.hasGitHubRemote"
         }
       ],
       "view/item/context": [

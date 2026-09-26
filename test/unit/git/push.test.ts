@@ -74,3 +74,18 @@ describe('Repository push', () => {
     expect(git('ls-remote', '--tags', 'origin', 'v2.0')).toContain('refs/tags/v2.0');
   });
 });
+
+describe('Repository remote URLs', () => {
+  it('reads the configured URL of every remote', async () => {
+    const fixture = createHistoryRepo();
+    try {
+      const repository = new Repository(fixture.repo.root, new Git(await findGit([])));
+      fixture.repo.git('remote', 'add', 'github', 'git@github.com:acme/app.git');
+      const urls = await repository.getRemoteUrls();
+      expect(urls.get('github')).toBe('git@github.com:acme/app.git');
+      expect(urls.get('origin')).toMatch(/origin\.git$/);
+    } finally {
+      fixture.repo.dispose();
+    }
+  });
+});

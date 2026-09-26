@@ -11,7 +11,9 @@ export type BranchCommand =
   | 'continueCherryPick'
   | 'abortCherryPick'
   | 'continueRevert'
-  | 'abortRevert';
+  | 'abortRevert'
+  | 'createPullRequest'
+  | 'pullRequests';
 
 export type BranchRef = LocalBranch | RemoteBranch;
 
@@ -33,9 +35,20 @@ export interface BranchEntriesInput {
   recent: readonly string[];
   favorites: ReadonlySet<string>;
   operation?: OperationKind;
+  github?: boolean;
 }
 
 const MAX_RECENT = 5;
+
+const GITHUB_COMMANDS: BranchEntry[] = [
+  {
+    kind: 'command',
+    command: 'createPullRequest',
+    label: 'Create Pull Request…',
+    icon: 'git-pull-request-create',
+  },
+  { kind: 'command', command: 'pullRequests', label: 'Pull Requests…', icon: 'git-pull-request' },
+];
 
 const OPERATION_COMMANDS: Partial<Record<OperationKind, BranchEntry[]>> = {
   merge: [{ kind: 'command', command: 'abortMerge', label: 'Abort Merge', icon: 'close' }],
@@ -126,6 +139,7 @@ export function buildBranchEntries({
   recent,
   favorites,
   operation,
+  github,
 }: BranchEntriesInput): BranchEntry[] {
   const locals = refs.filter((ref): ref is LocalBranch => ref.type === 'branch');
   const remotes = refs.filter((ref): ref is RemoteBranch => ref.type === 'remoteBranch');
@@ -137,6 +151,7 @@ export function buildBranchEntries({
   const entries: BranchEntry[] = [
     ...((operation && OPERATION_COMMANDS[operation]) ?? []),
     ...COMMANDS,
+    ...(github ? GITHUB_COMMANDS : []),
   ];
   if (recentBranches.length > 0) {
     entries.push({ kind: 'separator', label: 'Recent' });

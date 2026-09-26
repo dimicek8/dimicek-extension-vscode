@@ -8,6 +8,7 @@ import {
   registerConflictsFeature,
 } from './features/conflicts/conflictsFeature';
 import { type FetchFeature, registerFetchFeature } from './features/fetch/fetchFeature';
+import { type GitHubFeature, registerGitHubFeature } from './features/github/githubFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
 import { type RebaseFeature, registerRebaseFeature } from './features/rebase/rebaseFeature';
@@ -30,6 +31,7 @@ export interface DimicekApi {
   conflicts: ConflictsFeature | undefined;
   rebase: RebaseFeature | undefined;
   tags: TagsFeature | undefined;
+  github: GitHubFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -52,6 +54,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const conflicts = registerConflictsFeature(context, commit.model, commit.tree, output);
     const rebase = registerRebaseFeature(context, commit.model, output);
     const tags = registerTagsFeature(context, commit.model, output);
+    const github = registerGitHubFeature(context, commit.model, push.dialog, output);
+    branches.popup.githubAvailable = () => github.service.isAvailable();
     return {
       repoManager,
       commit,
@@ -66,6 +70,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       conflicts,
       rebase,
       tags,
+      github,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -85,6 +90,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       conflicts: undefined,
       rebase: undefined,
       tags: undefined,
+      github: undefined,
     };
   }
 }

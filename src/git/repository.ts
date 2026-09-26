@@ -98,6 +98,26 @@ export class Repository {
     return (await this.run(['remote'], signal)).split('\n').filter(Boolean);
   }
 
+  async getRemoteUrls(signal?: AbortSignal): Promise<Map<string, string>> {
+    const output = await this.run(['config', '--get-regexp', '^remote\\..*\\.url$'], signal).catch(
+      () => '',
+    );
+    const urls = new Map<string, string>();
+    for (const line of output.split('\n')) {
+      const match = /^remote\.(.+)\.url (.+)$/.exec(line.trim());
+      if (match) {
+        urls.set(match[1]!, match[2]!);
+      }
+    }
+    return urls;
+  }
+
+  fetchRefspec(remote: string, refspec: string, signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['fetch', remote, refspec], signal, { timeoutMs: NETWORK_TIMEOUT_MS });
+    });
+  }
+
   async getRefs(signal?: AbortSignal): Promise<Ref[]> {
     const [remotes, output] = await Promise.all([
       this.getRemotes(signal),

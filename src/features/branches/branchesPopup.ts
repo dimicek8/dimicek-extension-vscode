@@ -51,6 +51,8 @@ function separator(): BranchAction {
 }
 
 export class BranchesPopup {
+  githubAvailable: () => Promise<boolean> = async () => false;
+
   constructor(
     private readonly model: ChangesModel,
     private readonly favorites: BranchFavorites,
@@ -62,16 +64,18 @@ export class BranchesPopup {
     if (!repository) {
       return [];
     }
-    const [refs, recent, operation] = await Promise.all([
+    const [refs, recent, operation, github] = await Promise.all([
       repository.getRefs(),
       repository.getRecentCheckouts(),
       repository.getOperationState().catch(() => undefined),
+      this.githubAvailable(),
     ]);
     return buildBranchEntries({
       refs,
       recent,
       favorites: this.favorites.get(repository.root),
       operation: operation?.kind,
+      github,
     });
   }
 
@@ -125,7 +129,7 @@ export class BranchesPopup {
     }
   }
 
-  runCommand(command: BranchCommand): Promise<unknown> {
+  async runCommand(command: BranchCommand): Promise<unknown> {
     switch (command) {
       case 'newBranch':
         return this.operations.promptNewBranch('HEAD', this.model.branch.head ?? 'HEAD');
@@ -147,6 +151,10 @@ export class BranchesPopup {
         return this.operations.continueRevert();
       case 'abortRevert':
         return this.operations.abortRevert();
+      case 'createPullRequest':
+        return vscode.commands.executeCommand('dimicek.github.createPullRequest');
+      case 'pullRequests':
+        return vscode.commands.executeCommand('dimicek.github.pullRequests');
     }
   }
 

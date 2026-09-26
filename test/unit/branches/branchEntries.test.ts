@@ -127,3 +127,21 @@ describe('buildBranchEntries during an operation', () => {
     ]);
   });
 });
+
+describe('buildBranchEntries for GitHub repositories', () => {
+  it('adds pull request commands', () => {
+    const entries = buildBranchEntries({
+      refs: [],
+      recent: [],
+      favorites: new Set(),
+      github: true,
+    });
+    expect(outline(entries)).toEqual([
+      '>newBranch',
+      '>checkoutRevision',
+      '>fetch',
+      '>createPullRequest',
+      '>pullRequests',
+    ]);
+  });
+});
