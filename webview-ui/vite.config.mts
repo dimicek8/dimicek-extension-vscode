@@ -9,6 +9,7 @@ const entries = {
   log: 'src/log/main.tsx',
   push: 'src/push/main.tsx',
   rebase: 'src/rebase/main.tsx',
+  branches: 'src/branches/main.tsx',
 };
 
 export default defineConfig(({ mode }) => ({

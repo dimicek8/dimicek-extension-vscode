@@ -151,3 +151,48 @@ export type RebaseToWebview =
 
 export type RebaseFromWebview =
   { type: 'ready' } | { type: 'start'; entries: RebaseEntry[] } | { type: 'cancel' };
+
+export interface BranchesViewBranch {
+  fullName: string;
+  name: string;
+  kind: 'local' | 'remote';
+  remote?: string;
+  shortName: string;
+  current: boolean;
+  favorite: boolean;
+  description?: string;
+}
+
+export interface BranchesViewCommand {
+  command: string;
+  label: string;
+  icon: string;
+}
+
+export interface BranchesViewAction {
+  id: string;
+  label: string;
+  icon: string;
+  group: number;
+}
+
+export interface BranchesViewState {
+  repository: string;
+  current?: string;
+  operation?: string;
+  commands: BranchesViewCommand[];
+  recent: string[];
+  branches: BranchesViewBranch[];
+}
+
+export type BranchesToWebview =
+  | { type: 'state'; state: BranchesViewState }
+  | { type: 'actions'; fullName: string; actions: BranchesViewAction[] };
+
+export type BranchesFromWebview =
+  | { type: 'ready' }
+  | { type: 'select'; fullName: string }
+  | { type: 'runAction'; fullName: string; action: string }
+  | { type: 'runCommand'; command: string }
+  | { type: 'toggleFavorite'; fullName: string }
+  | { type: 'close' };

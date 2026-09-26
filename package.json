@@ -347,6 +347,18 @@
         "title": "Pull Requests…",
         "category": "Dimicek",
         "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "dimicek.branches.showWindow",
+        "title": "Branches (Window)",
+        "category": "Dimicek",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "dimicek.branches.showQuickPick",
+        "title": "Branches (Quick Pick)",
+        "category": "Dimicek",
+        "icon": "$(git-branch)"
       }
     ],
     "viewsContainers": {
@@ -667,6 +679,14 @@
         {
           "command": "dimicek.github.pullRequests",
           "when": "dimicek.hasGitHubRemote"
+        },
+        {
+          "command": "dimicek.branches.showWindow",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.branches.showQuickPick",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [
@@ -933,6 +953,19 @@
           "default": 0,
           "minimum": 0,
           "description": "Fetch all remotes in the background every N minutes. 0 turns automatic fetch off."
+        },
+        "dimicek.branches.popupStyle": {
+          "type": "string",
+          "enum": [
+            "window",
+            "quickPick"
+          ],
+          "enumDescriptions": [
+            "Open the Branches window in the editor area",
+            "Open the compact quick pick at the top of the window"
+          ],
+          "default": "window",
+          "description": "What clicking the branch in the status bar opens."
         }
       }
     },
@@ -997,6 +1030,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "@vscode-elements/elements": "^2.5.1",
     "@vscode-elements/react-elements": "^2.4.0",
+    "@vscode/codicons": "^0.0.45",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",

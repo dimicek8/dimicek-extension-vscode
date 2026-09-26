@@ -1,0 +1,193 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.branches {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+}
+
+.branches--empty,
+.branches__placeholder {
+  color: var(--vscode-descriptionForeground);
+  padding: 8px;
+}
+
+.branches__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.branches__operation {
+  padding: 6px 10px;
+  border-left: 3px solid var(--vscode-editorWarning-foreground);
+  background: var(--vscode-inputValidation-warningBackground, transparent);
+}
+
+.branches__body {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(240px, 360px);
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.branches__left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.branches__search {
+  width: 100%;
+}
+
+.branches__list {
+  flex: 1;
+  overflow: auto;
+  outline: none;
+  border: 1px solid var(--vscode-panel-border, var(--vscode-widget-border, transparent));
+}
+
+.branches__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding-right: 6px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.branches__row:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.branches__row--section {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.branches__row--selected,
+.branches__row--selected:hover {
+  background: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.branches__list:focus .branches__row--selected {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.branches__row--current .branches__name {
+  font-weight: 400;
+  font-weight: 600;
+}
+
+.branches__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.branches__description {
+  color: var(--vscode-descriptionForeground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.branches__star {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  visibility: hidden;
+}
+
+.branches__row:hover .branches__star,
+.branches__star--on {
+  visibility: visible;
+}
+
+.branches__star--on {
+  color: var(--vscode-charts-yellow, #cca700);
+}
+
+.branches__right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+
+.branches__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 1.15em;
+  word-break: break-all;
+}
+
+.branches__subtitle {
+  color: var(--vscode-descriptionForeground);
+}
+
+.branches__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vscode-panel-border, transparent);
+}
+
+.branches__action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--vscode-foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.branches__action:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.branches__action:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.branches__action--primary,
+.branches__action--primary:hover {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.branches__toolbar .codicon {
+  margin-right: 4px;
+}

@@ -15,6 +15,8 @@ interface EntryItem extends vscode.QuickPickItem {
 }
 
 export interface BranchAction extends vscode.QuickPickItem {
+  id?: string;
+  icon?: string;
   run?: () => Promise<unknown>;
 }
 
@@ -42,8 +44,13 @@ function toItem(entry: BranchEntry): EntryItem {
   }
 }
 
-function action(label: string, icon: string, run: () => Promise<unknown>): BranchAction {
-  return { label, iconPath: new vscode.ThemeIcon(icon), run };
+function action(
+  id: string,
+  label: string,
+  icon: string,
+  run: () => Promise<unknown>,
+): BranchAction {
+  return { id, label, icon, iconPath: new vscode.ThemeIcon(icon), run };
 }
 
 function separator(): BranchAction {
@@ -164,10 +171,10 @@ export class BranchesPopup {
     const actions: BranchAction[] = [];
 
     if (!current) {
-      actions.push(action('Checkout', 'check', () => ops.checkout(ref)));
+      actions.push(action('checkout', 'Checkout', 'check', () => ops.checkout(ref)));
     }
     actions.push(
-      action(`New Branch from '${ref.name}'…`, 'add', () =>
+      action('newBranchFrom', `New Branch from '${ref.name}'…`, 'add', () =>
         ops.promptNewBranch(ref.name, ref.name),
       ),
     );
@@ -176,17 +183,22 @@ export class BranchesPopup {
       actions.push(separator());
       if (ref.type === 'branch') {
         actions.push(
-          action(`Checkout and Rebase onto '${currentName}'`, 'git-pull-request', () =>
-            ops.checkoutAndRebase(ref, currentName),
+          action(
+            'checkoutAndRebase',
+            `Checkout and Rebase onto '${currentName}'`,
+            'git-pull-request',
+            () => ops.checkoutAndRebase(ref, currentName),
           ),
         );
       }
       actions.push(
-        action(`Compare with '${currentName}'`, 'git-compare', () => ops.compare(ref, currentName)),
-        action(`Rebase '${currentName}' onto '${ref.name}'`, 'git-pull-request', () =>
+        action('compare', `Compare with '${currentName}'`, 'git-compare', () =>
+          ops.compare(ref, currentName),
+        ),
+        action('rebaseOnto', `Rebase '${currentName}' onto '${ref.name}'`, 'git-pull-request', () =>
           ops.rebaseCurrentOnto(ref, currentName),
         ),
-        action(`Merge '${ref.name}' into '${currentName}'`, 'git-merge', () =>
+        action('merge', `Merge '${ref.name}' into '${currentName}'`, 'git-merge', () =>
           ops.merge(ref, currentName),
         ),
       );
@@ -196,24 +208,24 @@ export class BranchesPopup {
     if (ref.type === 'branch') {
       actions.push(
         current
-          ? action('Push…', 'repo-push', async () =>
+          ? action('push', 'Push…', 'repo-push', async () =>
               vscode.commands.executeCommand('dimicek.push.show'),
             )
-          : action(`Push '${ref.name}'`, 'repo-push', () => ops.push(ref)),
+          : action('push', `Push '${ref.name}'`, 'repo-push', () => ops.push(ref)),
       );
       if (ref.upstream && !ref.upstream.gone) {
         actions.push(
           current
-            ? action('Update Project…', 'repo-pull', async () =>
+            ? action('update', 'Update Project…', 'repo-pull', async () =>
                 vscode.commands.executeCommand('dimicek.update.project'),
               )
-            : action(`Update '${ref.name}'`, 'repo-pull', () => ops.update(ref)),
+            : action('update', `Update '${ref.name}'`, 'repo-pull', () => ops.update(ref)),
         );
       }
-      actions.push(action('Rename…', 'edit', () => ops.promptRename(ref)));
+      actions.push(action('rename', 'Rename…', 'edit', () => ops.promptRename(ref)));
     }
     if (!current) {
-      actions.push(action('Delete', 'trash', () => ops.delete(ref)));
+      actions.push(action('delete', 'Delete', 'trash', () => ops.delete(ref)));
     }
     return actions;
   }
