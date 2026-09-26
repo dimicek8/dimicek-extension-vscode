@@ -1,4 +1,5 @@
 import type { GraphRow } from '../git/graph/graphBuilder';
+import type { RebaseEntry } from '../git/rebase/rebaseTodo';
 import type { NameStatusEntry } from '../git/parsers/nameStatus';
 
 export type { GraphLine, GraphRow } from '../git/graph/graphBuilder';
@@ -126,3 +127,27 @@ export type PushFromWebview =
   | { type: 'openFileDiff'; hash: string; parent?: string; file: LogFileChange }
   | { type: 'push'; force: boolean; tags: boolean }
   | { type: 'cancel' };
+
+export type { RebaseAction, RebaseEntry } from '../git/rebase/rebaseTodo';
+
+export interface RebaseCommit {
+  hash: string;
+  subject: string;
+  message: string;
+  author: string;
+  date: number;
+}
+
+export interface RebaseState {
+  branch: string;
+  base?: string;
+  commits: RebaseCommit[];
+}
+
+export type RebaseToWebview =
+  | { type: 'state'; state: RebaseState }
+  | { type: 'busy'; busy: boolean }
+  | { type: 'error'; message: string };
+
+export type RebaseFromWebview =
+  { type: 'ready' } | { type: 'start'; entries: RebaseEntry[] } | { type: 'cancel' };

@@ -305,6 +305,12 @@
         "title": "Open in Merge Editor",
         "category": "Dimicek",
         "icon": "$(git-merge)"
+      },
+      {
+        "command": "dimicek.log.interactiveRebase",
+        "title": "Interactively Rebase from Here…",
+        "category": "Dimicek",
+        "icon": "$(git-pull-request)"
       }
     ],
     "viewsContainers": {
@@ -597,6 +603,10 @@
         {
           "command": "dimicek.conflicts.openMergeEditor",
           "when": "false"
+        },
+        {
+          "command": "dimicek.log.interactiveRebase",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -741,6 +751,11 @@
           "command": "dimicek.log.compareWithLocal",
           "when": "webviewId == dimicek.log && webviewSection == commit",
           "group": "6_compare@1"
+        },
+        {
+          "command": "dimicek.log.interactiveRebase",
+          "when": "webviewId == dimicek.log && webviewSection == commit && !merge",
+          "group": "5_reset@2"
         }
       ],
       "explorer/context": [

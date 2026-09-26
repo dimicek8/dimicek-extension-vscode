@@ -1,4 +1,5 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
@@ -14,6 +15,12 @@ import { type NameStatusEntry, parseNameStatus } from './parsers/nameStatus';
 import { parseStashes, type Stash, STASH_FORMAT } from './parsers/stash';
 import { type LocalBranch, parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
+import {
+  buildRebaseTodo,
+  quotePath,
+  type RebaseEntry,
+  validateRebaseEntries,
+} from './rebase/rebaseTodo';
 
 export interface CommitRequest {
   message: string;
@@ -670,6 +677,69 @@ export class Repository {
       }
       await this.run(['checkout', `--${action}`, '--', path]);
       await this.run(['add', '--', path]);
+    });
+  }
+
+  async isAncestor(ancestor: string, descendant: string, signal?: AbortSignal): Promise<boolean> {
+    try {
+      await this.run(['merge-base', '--is-ancestor', ancestor, descendant], signal);
+      return true;
+    } catch (error) {
+      if (error instanceof GitError && error.exitCode === 1) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  async getRebaseCommits(
+    hash: string,
+    signal?: AbortSignal,
+  ): Promise<{ base: string | undefined; commits: Commit[] }> {
+    const [commit] = await this.getLog({ revisions: [hash], maxCount: 1 }, signal);
+    if (!commit) {
+      throw new Error(`Commit ${hash} does not exist.`);
+    }
+    if (!(await this.isAncestor(commit.hash, 'HEAD', signal))) {
+      throw new Error('The commit is not part of the current branch.');
+    }
+    const base = commit.parents[0];
+    const commits = await this.getLog(
+      { revisions: base ? [`^${base}`, 'HEAD'] : ['HEAD'] },
+      signal,
+    );
+    if (commits.some((candidate) => candidate.parents.length > 1)) {
+      throw new Error('The commits contain a merge commit, which cannot be rebased interactively.');
+    }
+    return { base, commits: commits.reverse() };
+  }
+
+  interactiveRebase(base: string | undefined, entries: readonly RebaseEntry[]): Promise<void> {
+    return this.exclusive(async () => {
+      const problem = validateRebaseEntries(entries);
+      if (problem) {
+        throw new Error(problem);
+      }
+      const directory = await mkdtemp(join(tmpdir(), 'dimicek-rebase-'));
+      const messageFile = (hash: string) => join(directory, `message-${hash}.txt`);
+      for (const entry of entries) {
+        if (entry.action === 'reword') {
+          await writeFile(messageFile(entry.hash), `${entry.message!.trim()}\n`);
+        }
+      }
+      const todo = join(directory, 'todo.txt');
+      await writeFile(todo, buildRebaseTodo(entries, messageFile));
+      try {
+        await this.run(
+          ['rebase', '--interactive', ...(base ? ['--end-of-options', base] : ['--root'])],
+          undefined,
+          { env: { GIT_SEQUENCE_EDITOR: `cp ${quotePath(todo)}`, GIT_EDITOR: 'true' } },
+        );
+      } finally {
+        if (!(await this.getOperationState())) {
+          await rm(directory, { recursive: true, force: true });
+        }
+      }
     });
   }
 

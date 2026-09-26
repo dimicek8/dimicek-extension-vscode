@@ -10,6 +10,7 @@ import {
 import { type FetchFeature, registerFetchFeature } from './features/fetch/fetchFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
+import { type RebaseFeature, registerRebaseFeature } from './features/rebase/rebaseFeature';
 import { registerStashFeature, type StashFeature } from './features/stash/stashFeature';
 import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
 import { RepoManager } from './vscode/repoManager';
@@ -26,6 +27,7 @@ export interface DimicekApi {
   compare: CompareFeature | undefined;
   stash: StashFeature | undefined;
   conflicts: ConflictsFeature | undefined;
+  rebase: RebaseFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -46,6 +48,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const compare = registerCompareFeature(context, repoManager, output);
     const stash = registerStashFeature(context, commit.model, output);
     const conflicts = registerConflictsFeature(context, commit.model, commit.tree, output);
+    const rebase = registerRebaseFeature(context, commit.model, output);
     return {
       repoManager,
       commit,
@@ -58,6 +61,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       compare,
       stash,
       conflicts,
+      rebase,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -75,6 +79,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       compare: undefined,
       stash: undefined,
       conflicts: undefined,
+      rebase: undefined,
     };
   }
 }

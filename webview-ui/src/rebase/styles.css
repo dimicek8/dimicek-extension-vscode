@@ -1,0 +1,124 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.rebase {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+}
+
+.rebase--empty {
+  color: var(--vscode-descriptionForeground);
+}
+
+.rebase__header h2 {
+  margin: 0 0 4px;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.rebase__branch {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.rebase__hint {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+.rebase__error {
+  padding: 6px 10px;
+  border-left: 3px solid var(--vscode-errorForeground);
+  background: var(--vscode-inputValidation-errorBackground, transparent);
+}
+
+.rebase__rows {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--vscode-panel-border, var(--vscode-widget-border, transparent));
+}
+
+.rebase__row {
+  display: grid;
+  grid-template-columns: auto 110px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+}
+
+.rebase__move {
+  display: flex;
+  flex-direction: column;
+}
+
+.rebase__move button {
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--vscode-foreground);
+  font-size: 0.7em;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.rebase__move button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.rebase__commit {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rebase__subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rebase__message {
+  width: 100%;
+}
+
+.rebase__meta {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.rebase__row--drop .rebase__subject {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.rebase__row--squash .rebase__subject,
+.rebase__row--fixup .rebase__subject {
+  color: var(--vscode-descriptionForeground);
+}
+
+.rebase__footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.rebase__actions {
+  display: flex;
+  gap: 8px;
+}
