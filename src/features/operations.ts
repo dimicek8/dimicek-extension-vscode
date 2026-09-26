@@ -41,11 +41,14 @@ export function describeGitError(error: unknown): string {
   return errorMessage(error);
 }
 
+export type OperationProgress = vscode.Progress<{ message?: string }>;
+
 export async function runOperation(
   model: ChangesModel,
   output: vscode.LogOutputChannel,
   title: string,
-  operation: (repository: Repository) => Promise<boolean | void>,
+  operation: (repository: Repository, progress: OperationProgress) => Promise<boolean | void>,
+  location: vscode.ProgressLocation = vscode.ProgressLocation.Window,
 ): Promise<boolean> {
   const repository = model.repository;
   if (!repository) {
@@ -53,9 +56,8 @@ export async function runOperation(
     return false;
   }
   try {
-    const result = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Window, title },
-      () => operation(repository),
+    const result = await vscode.window.withProgress({ location, title }, (progress) =>
+      operation(repository, progress),
     );
     return result !== false;
   } catch (error) {

@@ -430,6 +430,20 @@ export class Repository {
     return this.diffNameStatus(parents[0]!, hash, signal);
   }
 
+  async resolveRevision(revision: string, signal?: AbortSignal): Promise<string> {
+    return (
+      await this.run(['rev-parse', '--verify', '--end-of-options', `${revision}^{commit}`], signal)
+    ).trim();
+  }
+
+  async countCommits(from: string, to: string, signal?: AbortSignal): Promise<number> {
+    const output = await this.run(
+      ['rev-list', '--count', '--end-of-options', `${from}..${to}`],
+      signal,
+    );
+    return Number(output.trim());
+  }
+
   async countAheadBehind(
     base: string,
     other: string,

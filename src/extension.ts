@@ -3,6 +3,7 @@ import { type BranchesFeature, registerBranchesFeature } from './features/branch
 import { type CommitFeature, registerCommitFeature } from './features/commit/commitFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
+import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
 import { RepoManager } from './vscode/repoManager';
 
 export interface DimicekApi {
@@ -11,6 +12,7 @@ export interface DimicekApi {
   branches: BranchesFeature | undefined;
   log: LogFeature | undefined;
   push: PushFeature | undefined;
+  update: UpdateFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -25,7 +27,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const branches = registerBranchesFeature(context, commit.model, output);
     const log = registerLogFeature(context, repoManager, commit.model, branches.operations, output);
     const push = registerPushFeature(context, commit.model, output);
-    return { repoManager, commit, branches, log, push };
+    const update = registerUpdateFeature(context, commit.model, output);
+    return { repoManager, commit, branches, log, push, update };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.error(message);
@@ -36,6 +39,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       branches: undefined,
       log: undefined,
       push: undefined,
+      update: undefined,
     };
   }
 }

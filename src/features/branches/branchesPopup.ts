@@ -194,7 +194,13 @@ export class BranchesPopup {
           : action(`Push '${ref.name}'`, 'repo-push', () => ops.push(ref)),
       );
       if (ref.upstream && !ref.upstream.gone) {
-        actions.push(action(`Update '${ref.name}'`, 'repo-pull', () => ops.update(ref)));
+        actions.push(
+          current
+            ? action('Update Project…', 'repo-pull', async () =>
+                vscode.commands.executeCommand('dimicek.update.project'),
+              )
+            : action(`Update '${ref.name}'`, 'repo-pull', () => ops.update(ref)),
+        );
       }
       actions.push(action('Rename…', 'edit', () => ops.promptRename(ref)));
     }

@@ -183,6 +183,12 @@
         "title": "Push…",
         "category": "Dimicek",
         "icon": "$(repo-push)"
+      },
+      {
+        "command": "dimicek.update.project",
+        "title": "Update Project…",
+        "category": "Dimicek",
+        "icon": "$(repo-pull)"
       }
     ],
     "viewsContainers": {
@@ -262,6 +268,11 @@
         },
         {
           "command": "dimicek.push.show",
+          "when": "view == dimicek.changes",
+          "group": "navigation@0"
+        },
+        {
+          "command": "dimicek.update.project",
           "when": "view == dimicek.changes",
           "group": "navigation@0"
         }
@@ -365,6 +376,10 @@
         },
         {
           "command": "dimicek.push.show",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.update.project",
           "when": "dimicek.hasRepository"
         }
       ],
@@ -470,6 +485,21 @@
           "type": "boolean",
           "default": true,
           "description": "Group files in the Changes view by directory."
+        },
+        "dimicek.update.method": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "merge",
+            "rebase"
+          ],
+          "enumDescriptions": [
+            "Ask every time",
+            "Merge the upstream branch into the current branch",
+            "Rebase the current branch onto the upstream branch"
+          ],
+          "default": "ask",
+          "description": "How Update Project applies upstream changes."
         }
       }
     },

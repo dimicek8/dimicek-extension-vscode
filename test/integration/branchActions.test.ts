@@ -69,7 +69,7 @@ describe('Branch actions', () => {
     assert.deepStrictEqual(await labels('main', true), [
       "New Branch from 'main'…",
       'Push…',
-      "Update 'main'",
+      'Update Project…',
       'Rename…',
     ]);
     assert.deepStrictEqual(await labels('origin/main'), [
