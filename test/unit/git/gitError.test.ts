@@ -24,7 +24,22 @@ describe('classifyGitError', () => {
       "fatal: could not read Username for 'https://github.com': terminal prompts disabled",
       'AuthenticationFailed',
     ],
-    ['git@github.com: Permission denied (publickey).', 'AuthenticationFailed'],
+    [
+      'git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.',
+      'AuthenticationFailed',
+    ],
+    [
+      "fatal: unable to access 'https://github.com/x/y.git/': The requested URL returned error: 403",
+      'AuthenticationFailed',
+    ],
+    [
+      "fatal: unable to access 'https://github.com/x/y.git/': Could not resolve host: github.com",
+      'NetworkError',
+    ],
+    [
+      'ssh: connect to host github.com port 22: Connection timed out\nfatal: Could not read from remote repository.',
+      'NetworkError',
+    ],
     ['fatal: something unexpected', 'Unknown'],
   ])('%s → %s', (stderr, code) => {
     expect(classifyGitError(stderr)).toBe(code);

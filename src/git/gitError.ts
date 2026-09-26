@@ -9,6 +9,7 @@ export type GitErrorCode =
   | 'AuthenticationFailed'
   | 'RepositoryLocked'
   | 'BranchNotFullyMerged'
+  | 'NetworkError'
   | 'Unknown';
 
 export interface GitErrorInit {
@@ -49,8 +50,12 @@ const STDERR_PATTERNS: ReadonlyArray<[RegExp, GitErrorCode]> = [
   [/CONFLICT|Automatic merge failed|could not apply|fix conflicts/i, 'Conflict'],
   [/\[rejected\]|failed to push some refs|non-fast-forward/i, 'PushRejected'],
   [
-    /Authentication failed|could not read Username|Permission denied \(publickey|terminal prompts disabled/i,
+    /Authentication failed|could not read Username|Permission denied \(publickey|terminal prompts disabled|returned error: 40[13]/i,
     'AuthenticationFailed',
+  ],
+  [
+    /Could not resolve host|unable to access|Connection (timed out|refused)|Network is unreachable|Could not read from remote repository/i,
+    'NetworkError',
   ],
 ];
 

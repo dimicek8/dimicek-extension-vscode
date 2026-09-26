@@ -177,6 +177,12 @@
         "title": "Compare with Local",
         "category": "Dimicek",
         "icon": "$(git-compare)"
+      },
+      {
+        "command": "dimicek.push.show",
+        "title": "Push…",
+        "category": "Dimicek",
+        "icon": "$(repo-push)"
       }
     ],
     "viewsContainers": {
@@ -253,6 +259,11 @@
           "command": "dimicek.log.refresh",
           "when": "view == dimicek.log",
           "group": "navigation"
+        },
+        {
+          "command": "dimicek.push.show",
+          "when": "view == dimicek.changes",
+          "group": "navigation@0"
         }
       ],
       "commandPalette": [
@@ -351,6 +362,10 @@
         {
           "command": "dimicek.log.compareWithLocal",
           "when": "false"
+        },
+        {
+          "command": "dimicek.push.show",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [

@@ -15,6 +15,15 @@ export interface CommitRequest {
   amend?: boolean;
 }
 
+export interface PushRequest {
+  branch: string;
+  remote: string;
+  remoteBranch: string;
+  force?: boolean;
+  tags?: boolean;
+  setUpstream?: boolean;
+}
+
 const NETWORK_TIMEOUT_MS = 5 * 60_000;
 
 export type OperationKind = 'merge' | 'rebase' | 'cherryPick' | 'revert';
@@ -522,9 +531,44 @@ export class Repository {
     });
   }
 
-  stash(message: string): Promise<void> {
+  stash(message: string, options: { includeUntracked?: boolean } = {}): Promise<void> {
     return this.exclusive(async () => {
-      await this.run(['stash', 'push', '--include-untracked', '--message', message]);
+      const untracked = options.includeUntracked === false ? [] : ['--include-untracked'];
+      await this.run(['stash', 'push', ...untracked, '--message', message]);
+    });
+  }
+
+  async getOutgoingCommits(
+    branch: string,
+    remote: string,
+    remoteBranch: string,
+    signal?: AbortSignal,
+  ): Promise<Commit[]> {
+    const remoteRefs = (await this.getRefs(signal)).filter((ref) => ref.type === 'remoteBranch');
+    const target = `refs/remotes/${remote}/${remoteBranch}`;
+    const excluded = remoteRefs.some((ref) => ref.fullName === target)
+      ? [target]
+      : remoteRefs.map((ref) => ref.fullName);
+    return this.getLog(
+      { revisions: [`refs/heads/${branch}`, ...excluded.map((ref) => `^${ref}`)] },
+      signal,
+    );
+  }
+
+  pushBranch(request: PushRequest, signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      const args = ['push'];
+      if (request.force) {
+        args.push('--force-with-lease');
+      }
+      if (request.tags) {
+        args.push('--follow-tags');
+      }
+      if (request.setUpstream) {
+        args.push('--set-upstream');
+      }
+      args.push(request.remote, `refs/heads/${request.branch}:refs/heads/${request.remoteBranch}`);
+      await this.run(args, signal, { timeoutMs: NETWORK_TIMEOUT_MS });
     });
   }
 

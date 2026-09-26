@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 const entries = {
   commit: 'src/commit/main.tsx',
   log: 'src/log/main.tsx',
+  push: 'src/push/main.tsx',
 };
 
 export default defineConfig(({ mode }) => ({

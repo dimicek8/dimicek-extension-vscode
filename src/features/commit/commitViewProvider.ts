@@ -158,21 +158,11 @@ export class CommitViewProvider implements vscode.WebviewViewProvider, vscode.Di
     this.output.info(summary);
     vscode.window.setStatusBarMessage(`$(check) ${summary}`, 5000);
 
-    if (options.push) {
-      try {
-        await vscode.window.withProgress(
-          { location: vscode.ProgressLocation.Notification, title: 'Pushing…' },
-          () => repository.push(),
-        );
-        vscode.window.setStatusBarMessage('$(check) Pushed', 5000);
-      } catch (error) {
-        this.output.error(`Push failed: ${errorMessage(error)}`);
-        void vscode.window.showErrorMessage(`Push failed: ${errorMessage(error)}`);
-      }
-    }
-
     this.setBusy(false);
     await this.model.refresh();
+    if (options.push) {
+      await vscode.commands.executeCommand('dimicek.push.show');
+    }
     return true;
   }
 

@@ -10,7 +10,7 @@ import type {
   LogFromWebview,
   LogToWebview,
 } from '../../shared/protocol';
-import { toEmptyUri, toGitUri } from '../../vscode/gitContentProvider';
+import { openCommitFileDiff } from '../fileComparison';
 import { buildWebviewHtml, webviewOptions } from '../../vscode/webviewHtml';
 import type { LogModel, LogUpdate } from './logModel';
 import { toLogRefs } from './logRefs';
@@ -144,17 +144,9 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
   async openFileDiff(hash: string, file: LogFileChange, parent?: string): Promise<void> {
     const root = this.model.activeRepository?.root;
-    if (!root) {
-      return;
+    if (root) {
+      await openCommitFileDiff(root, hash, file, parent);
     }
-    const left =
-      file.status === 'added' || !parent
-        ? toEmptyUri(root, file.path)
-        : toGitUri(root, file.originalPath ?? file.path, parent);
-    const right =
-      file.status === 'deleted' ? toEmptyUri(root, file.path) : toGitUri(root, file.path, hash);
-    const title = `${basename(file.path)} (${parent ? parent.slice(0, 8) : 'empty'} ↔ ${hash.slice(0, 8)})`;
-    await vscode.commands.executeCommand('vscode.diff', left, right, title, { preview: true });
   }
 
   private resetMessage(preserve: boolean): LogToWebview {

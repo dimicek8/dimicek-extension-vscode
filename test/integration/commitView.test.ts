@@ -82,11 +82,16 @@ describe('Commit view', () => {
     assert.strictEqual(fixture.repo.git('rev-list', '--count', 'main..topic'), '1');
   });
 
-  it('commits and pushes a new branch', async () => {
+  it('commits and opens the push dialog', async () => {
+    const api = await activateExtension();
+    const ready = waitFor(api.push!.dialog.onDidBecomeReady);
     commit.model.setIncluded(changedPaths(), true);
     await commit.commitView.commit({ message: 'Restructure sources', amend: false, push: true });
 
     assert.deepStrictEqual(changedPaths(), []);
+    assert.ok(api.push!.dialog.isOpen);
+    await ready;
+    assert.ok(await api.push!.dialog.push(false, false));
     assert.strictEqual(
       fixture.repo.git('rev-parse', '--abbrev-ref', 'topic@{upstream}'),
       'origin/topic',

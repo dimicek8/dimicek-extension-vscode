@@ -68,7 +68,7 @@ describe('Branch actions', () => {
     ]);
     assert.deepStrictEqual(await labels('main', true), [
       "New Branch from 'main'…",
-      "Push 'main'",
+      'Push…',
       "Update 'main'",
       'Rename…',
     ]);

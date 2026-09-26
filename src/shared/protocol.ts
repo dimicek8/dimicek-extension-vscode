@@ -90,3 +90,37 @@ export type LogFromWebview =
   | { type: 'selectCommit'; hash: string }
   | { type: 'openFileDiff'; hash: string; parent?: string; file: LogFileChange }
   | { type: 'copy'; text: string };
+
+export interface PushCommit {
+  hash: string;
+  parents: string[];
+  subject: string;
+  author: string;
+  date: number;
+}
+
+export interface PushState {
+  repository: string;
+  branch: string;
+  remotes: string[];
+  remote: string;
+  remoteBranch: string;
+  remoteBranchExists: boolean;
+  setUpstream: boolean;
+  behind: number;
+  commits: PushCommit[];
+}
+
+export type PushToWebview =
+  | { type: 'state'; state: PushState }
+  | { type: 'files'; hash: string; files: LogFileChange[] }
+  | { type: 'busy'; busy: boolean }
+  | { type: 'error'; message: string };
+
+export type PushFromWebview =
+  | { type: 'ready' }
+  | { type: 'changeTarget'; remote: string; remoteBranch: string }
+  | { type: 'selectCommit'; hash: string }
+  | { type: 'openFileDiff'; hash: string; parent?: string; file: LogFileChange }
+  | { type: 'push'; force: boolean; tags: boolean }
+  | { type: 'cancel' };

@@ -75,3 +75,19 @@ export function showFileComparison(comparison: FileComparison): void {
   quickPick.onDidHide(() => quickPick.dispose());
   quickPick.show();
 }
+
+export async function openCommitFileDiff(
+  root: string,
+  hash: string,
+  file: NameStatusEntry,
+  parent?: string,
+): Promise<void> {
+  const left =
+    file.status === 'added' || !parent
+      ? toEmptyUri(root, file.path)
+      : toGitUri(root, file.originalPath ?? file.path, parent);
+  const right =
+    file.status === 'deleted' ? toEmptyUri(root, file.path) : toGitUri(root, file.path, hash);
+  const title = `${basename(file.path)} (${parent ? parent.slice(0, 8) : 'empty'} ↔ ${hash.slice(0, 8)})`;
+  await vscode.commands.executeCommand('vscode.diff', left, right, title, { preview: true });
+}
