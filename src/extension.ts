@@ -3,6 +3,10 @@ import { type BlameFeature, registerBlameFeature } from './features/blame/blameF
 import { type BranchesFeature, registerBranchesFeature } from './features/branches/branchesFeature';
 import { type CommitFeature, registerCommitFeature } from './features/commit/commitFeature';
 import { type CompareFeature, registerCompareFeature } from './features/compare/compareFeature';
+import {
+  type ConflictsFeature,
+  registerConflictsFeature,
+} from './features/conflicts/conflictsFeature';
 import { type FetchFeature, registerFetchFeature } from './features/fetch/fetchFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
@@ -21,6 +25,7 @@ export interface DimicekApi {
   blame: BlameFeature | undefined;
   compare: CompareFeature | undefined;
   stash: StashFeature | undefined;
+  conflicts: ConflictsFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -40,7 +45,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const blame = registerBlameFeature(context, repoManager, output);
     const compare = registerCompareFeature(context, repoManager, output);
     const stash = registerStashFeature(context, commit.model, output);
-    return { repoManager, commit, branches, log, push, update, fetch, blame, compare, stash };
+    const conflicts = registerConflictsFeature(context, commit.model, commit.tree, output);
+    return {
+      repoManager,
+      commit,
+      branches,
+      log,
+      push,
+      update,
+      fetch,
+      blame,
+      compare,
+      stash,
+      conflicts,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.error(message);
@@ -56,6 +74,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       blame: undefined,
       compare: undefined,
       stash: undefined,
+      conflicts: undefined,
     };
   }
 }

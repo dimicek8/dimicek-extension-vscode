@@ -662,6 +662,17 @@ export class Repository {
     );
   }
 
+  resolveConflict(path: string, action: 'ours' | 'theirs' | 'remove'): Promise<void> {
+    return this.exclusive(async () => {
+      if (action === 'remove') {
+        await this.run(['rm', '--quiet', '--', path]);
+        return;
+      }
+      await this.run(['checkout', `--${action}`, '--', path]);
+      await this.run(['add', '--', path]);
+    });
+  }
+
   stashApply(ref: string): Promise<void> {
     return this.exclusive(async () => {
       await this.run(['stash', 'apply', ref]);

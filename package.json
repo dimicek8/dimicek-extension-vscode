@@ -281,6 +281,30 @@
         "command": "dimicek.stash.showDiff",
         "title": "Show Diff",
         "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.conflicts.resolve",
+        "title": "Resolve Conflicts…",
+        "category": "Dimicek",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "dimicek.conflicts.acceptYours",
+        "title": "Accept Yours",
+        "category": "Dimicek",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "dimicek.conflicts.acceptTheirs",
+        "title": "Accept Theirs",
+        "category": "Dimicek",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "dimicek.conflicts.openMergeEditor",
+        "title": "Open in Merge Editor",
+        "category": "Dimicek",
+        "icon": "$(git-merge)"
       }
     ],
     "viewsContainers": {
@@ -557,6 +581,22 @@
         {
           "command": "dimicek.stash.showDiff",
           "when": "false"
+        },
+        {
+          "command": "dimicek.conflicts.resolve",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.conflicts.acceptYours",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.conflicts.acceptTheirs",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.conflicts.openMergeEditor",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -634,6 +674,31 @@
           "command": "dimicek.stash.drop",
           "when": "view == dimicek.stashes && viewItem == stash",
           "group": "3_drop@1"
+        },
+        {
+          "command": "dimicek.conflicts.resolve",
+          "when": "view == dimicek.changes && viewItem == group:conflicts",
+          "group": "inline@0"
+        },
+        {
+          "command": "dimicek.conflicts.resolve",
+          "when": "view == dimicek.changes && viewItem =~ /^(file:conflicted|group:conflicts|directory:conflicts)$/",
+          "group": "0_conflicts@0"
+        },
+        {
+          "command": "dimicek.conflicts.openMergeEditor",
+          "when": "view == dimicek.changes && viewItem == file:conflicted",
+          "group": "0_conflicts@1"
+        },
+        {
+          "command": "dimicek.conflicts.acceptYours",
+          "when": "view == dimicek.changes && viewItem =~ /^(file:conflicted|group:conflicts|directory:conflicts)$/",
+          "group": "0_conflicts@2"
+        },
+        {
+          "command": "dimicek.conflicts.acceptTheirs",
+          "when": "view == dimicek.changes && viewItem =~ /^(file:conflicted|group:conflicts|directory:conflicts)$/",
+          "group": "0_conflicts@3"
         }
       ],
       "webview/context": [

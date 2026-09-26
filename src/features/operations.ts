@@ -3,6 +3,8 @@ import { GitError, type GitErrorCode } from '../git/gitError';
 import type { Repository } from '../git/repository';
 import type { ChangesModel } from './commit/changesModel';
 
+const RESOLVE_CONFLICTS = 'Resolve Conflicts…';
+
 export type Choose = (
   message: string,
   detail: string,
@@ -69,6 +71,16 @@ export async function runOperation(
   }
 }
 
+export function showConflictWarning(message: string): void {
+  void vscode.window
+    .showWarningMessage(message, RESOLVE_CONFLICTS)
+    .then((choice) =>
+      choice === RESOLVE_CONFLICTS
+        ? vscode.commands.executeCommand('dimicek.conflicts.resolve')
+        : undefined,
+    );
+}
+
 export async function continueOnConflict(
   operation: () => Promise<void>,
   conflictMessage: string,
@@ -77,7 +89,7 @@ export async function continueOnConflict(
     await operation();
   } catch (error) {
     if (error instanceof GitError && error.code === 'Conflict') {
-      void vscode.window.showWarningMessage(conflictMessage);
+      showConflictWarning(conflictMessage);
       return;
     }
     throw error;

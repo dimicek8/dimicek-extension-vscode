@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { GitError } from '../../git/gitError';
 import type { ChangesModel } from '../commit/changesModel';
-import { errorMessage, runOperation } from '../operations';
+import { errorMessage, runOperation, showConflictWarning } from '../operations';
 
 export type UpdateMethod = 'merge' | 'rebase';
 
@@ -124,7 +124,7 @@ export class UpdateProject {
             chosen === 'merge'
               ? 'Resolve them in the Changes view and commit, or choose Abort Merge in the branches popup.'
               : 'Resolve them, mark the files as resolved and choose Continue Rebase in the branches popup.';
-          void vscode.window.showWarningMessage(
+          showConflictWarning(
             `Updating '${branch}' stopped because of conflicts. ${next}${stashNote}`,
           );
           return true;
