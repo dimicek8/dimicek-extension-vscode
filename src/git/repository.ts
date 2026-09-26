@@ -11,6 +11,7 @@ import {
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRecentCheckouts } from './parsers/reflog';
 import { type NameStatusEntry, parseNameStatus } from './parsers/nameStatus';
+import { parseStashes, type Stash, STASH_FORMAT } from './parsers/stash';
 import { type LocalBranch, parseRefs, type Ref, REFS_FORMAT } from './parsers/refs';
 import { type GitStatus, parseStatus } from './parsers/status';
 
@@ -599,7 +600,9 @@ export class Repository {
   stash(message: string, options: { includeUntracked?: boolean } = {}): Promise<void> {
     return this.exclusive(async () => {
       const untracked = options.includeUntracked === false ? [] : ['--include-untracked'];
-      await this.run(['stash', 'push', ...untracked, '--message', message]);
+      await this.run(['stash', 'push', ...untracked, '--message', message], undefined, {
+        env: { GIT_LITERAL_PATHSPECS: '0' },
+      });
     });
   }
 
@@ -637,9 +640,49 @@ export class Repository {
     });
   }
 
-  stashPop(): Promise<void> {
+  stashPop(ref?: string): Promise<void> {
     return this.exclusive(async () => {
-      await this.run(['stash', 'pop']);
+      await this.run(['stash', 'pop', ...(ref ? [ref] : [])]);
+    });
+  }
+
+  async getStashes(signal?: AbortSignal): Promise<Stash[]> {
+    return parseStashes(
+      await this.run(['stash', 'list', '-z', `--format=${STASH_FORMAT}`], signal),
+    );
+  }
+
+  async getStashFiles(stash: Stash, signal?: AbortSignal): Promise<NameStatusEntry[]> {
+    const untracked =
+      stash.hasUntracked && isVersionAtLeast(this.git.version, '2.32')
+        ? ['--include-untracked']
+        : [];
+    return parseNameStatus(
+      await this.run(['stash', 'show', ...untracked, '--name-status', '-z', stash.ref], signal),
+    );
+  }
+
+  stashApply(ref: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'apply', ref]);
+    });
+  }
+
+  stashDrop(ref: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'drop', ref]);
+    });
+  }
+
+  stashClear(): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'clear']);
+    });
+  }
+
+  stashBranch(name: string, ref: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['stash', 'branch', name, ref]);
     });
   }
 }
