@@ -1,3 +1,4 @@
+import { relative, sep } from 'node:path';
 import * as vscode from 'vscode';
 import type { RepoManager } from '../../vscode/repoManager';
 import type { BranchOperations } from '../branches/branchOperations';
@@ -28,6 +29,18 @@ export function registerLogFeature(
       target?.hash ? run(target.hash) : undefined,
     );
 
+  const showHistory = async (uri?: vscode.Uri) => {
+    const target = uri ?? vscode.window.activeTextEditor?.document.uri;
+    const repository = target ? repoManager.getRepository(target) : repoManager.activeRepository;
+    if (!repository) {
+      void vscode.window.showWarningMessage('The file is not in a Git repository.');
+      return;
+    }
+    const path = target ? relative(repository.root, target.fsPath).split(sep).join('/') : '';
+    await vscode.commands.executeCommand(`${LogViewProvider.viewId}.focus`);
+    await model.showHistory(repository, path);
+  };
+
   context.subscriptions.push(
     model,
     view,
@@ -38,6 +51,7 @@ export function registerLogFeature(
       vscode.commands.executeCommand(`${LogViewProvider.viewId}.focus`),
     ),
     vscode.commands.registerCommand('dimicek.log.refresh', () => model.reload()),
+    vscode.commands.registerCommand('dimicek.log.showHistory', showHistory),
     commitCommand('dimicek.log.copyRevision', (hash) => actions.copyRevision(hash)),
     commitCommand('dimicek.log.newBranch', (hash) => actions.newBranch(hash)),
     commitCommand('dimicek.log.newTag', (hash) => actions.promptNewTag(hash)),

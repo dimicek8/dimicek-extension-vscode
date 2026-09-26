@@ -1,3 +1,5 @@
+import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { GraphBuilder, type GraphRow, linearRows } from '../../git/graph/graphBuilder';
 import type { Commit } from '../../git/parsers/log';
@@ -27,6 +29,7 @@ export class LogModel implements vscode.Disposable {
   private graph: GraphBuilder | undefined;
   private more = false;
   private currentFilters: LogFilters = {};
+  private externalFiltersVersion = 0;
   private branchNames: string[] = [];
   private generation = 0;
   private loadingMore: Promise<void> | undefined;
@@ -76,6 +79,10 @@ export class LogModel implements vscode.Disposable {
     return this.currentFilters;
   }
 
+  get filtersVersion(): number {
+    return this.externalFiltersVersion;
+  }
+
   get branches(): readonly string[] {
     return this.branchNames;
   }
@@ -101,6 +108,21 @@ export class LogModel implements vscode.Disposable {
     return this.reload();
   }
 
+  showHistory(repository: Repository, path: string): Promise<void> {
+    this.repoManager.setActiveRepository(repository);
+    this.currentFilters = path ? { path, branch: 'HEAD' } : { branch: 'HEAD' };
+    this.externalFiltersVersion++;
+    return this.reload();
+  }
+
+  private async followsRenames(root: string, path: string): Promise<boolean> {
+    try {
+      return (await stat(join(root, path))).isFile();
+    } catch {
+      return !path.endsWith('/');
+    }
+  }
+
   private async fetchPage(
     repository: Repository,
     skip: number,
@@ -110,11 +132,11 @@ export class LogModel implements vscode.Disposable {
     if (skip === 0 && looksLikeHash(text) && (await repository.revisionExists(text.trim()))) {
       return repository.getLog({ revisions: [text.trim()], maxCount: 1 });
     }
-    return repository.getLog({
-      ...toLogOptions(this.currentFilters),
-      maxCount: count + 1,
-      skip,
-    });
+    const options = toLogOptions(this.currentFilters);
+    if (options.paths?.length === 1) {
+      options.follow = await this.followsRenames(repository.root, options.paths[0]!);
+    }
+    return repository.getLog({ ...options, maxCount: count + 1, skip });
   }
 
   private graphRowsFor(commits: readonly Commit[]): GraphRow[] {

@@ -114,3 +114,11 @@ describe('buildLogArgs', () => {
     ]);
   });
 });
+
+describe('buildLogArgs with follow', () => {
+  it('follows renames only for a single path', () => {
+    expect(buildLogArgs({ paths: ['a.txt'], follow: true })).toContain('--follow');
+    expect(buildLogArgs({ paths: ['a.txt', 'b.txt'], follow: true })).not.toContain('--follow');
+    expect(buildLogArgs({ follow: true })).not.toContain('--follow');
+  });
+});

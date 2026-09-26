@@ -30,6 +30,7 @@ export function App() {
   const [initialized, setInitialized] = useState(false);
   const [filters, setFilters] = useState<LogFilters>({});
   const [branches, setBranches] = useState<string[]>([]);
+  const [filtersVersion, setFiltersVersion] = useState(0);
   const [selected, setSelected] = useState<string>();
   const [details, setDetails] = useState<LogCommitDetails>();
   const [detailsError, setDetailsError] = useState<string>();
@@ -72,6 +73,7 @@ export function App() {
           setHasMore(message.hasMore);
           setFilters(message.filters);
           setBranches(message.branches);
+          setFiltersVersion(message.filtersVersion);
           setError(undefined);
           setInitialized(true);
           break;
@@ -139,7 +141,7 @@ export function App() {
     <div className="log-app">
       {initialized && (
         <LogToolbar
-          key={repository}
+          key={`${repository}:${filtersVersion}`}
           initial={filters}
           branches={branches}
           onChange={changeFilters}

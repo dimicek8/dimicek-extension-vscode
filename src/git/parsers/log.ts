@@ -124,6 +124,7 @@ export interface LogOptions {
   since?: Date;
   until?: Date;
   order?: 'topo' | 'date';
+  follow?: boolean;
 }
 
 export function buildLogArgs(options: LogOptions = {}): string[] {
@@ -149,6 +150,9 @@ export function buildLogArgs(options: LogOptions = {}): string[] {
   }
   if (options.until) {
     args.push(`--until=${options.until.toISOString()}`);
+  }
+  if (options.follow && options.paths?.length === 1) {
+    args.push('--follow');
   }
   if (options.all) {
     args.push('--exclude=refs/stash', '--all');

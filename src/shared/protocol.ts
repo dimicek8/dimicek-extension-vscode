@@ -76,6 +76,7 @@ export type LogToWebview =
       filters: LogFilters;
       branches: string[];
       preserve: boolean;
+      filtersVersion: number;
     }
   | { type: 'append'; commits: LogCommit[]; hasMore: boolean }
   | { type: 'details'; details: LogCommitDetails }

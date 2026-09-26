@@ -161,6 +161,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
       filters: this.model.filters,
       branches: [...this.model.branches],
       preserve,
+      filtersVersion: this.model.filtersVersion,
     };
   }
 

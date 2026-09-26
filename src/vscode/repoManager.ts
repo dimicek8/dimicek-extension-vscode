@@ -99,6 +99,14 @@ export class RepoManager implements vscode.Disposable {
     return this.active;
   }
 
+  setActiveRepository(repository: Repository): void {
+    if (repository !== this.active && this.managed.has(repository.root)) {
+      this.active = repository;
+      this.output.info(`Active repository: ${repository.root}`);
+      this.activeEmitter.fire(repository);
+    }
+  }
+
   getRepository(uri: vscode.Uri): Repository | undefined {
     if (uri.scheme !== 'file') {
       return undefined;

@@ -189,6 +189,12 @@
         "title": "Update Project…",
         "category": "Dimicek",
         "icon": "$(repo-pull)"
+      },
+      {
+        "command": "dimicek.log.showHistory",
+        "title": "Show History",
+        "category": "Dimicek",
+        "icon": "$(history)"
       }
     ],
     "viewsContainers": {
@@ -381,6 +387,10 @@
         {
           "command": "dimicek.update.project",
           "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.log.showHistory",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [
@@ -475,6 +485,27 @@
           "command": "dimicek.log.compareWithLocal",
           "when": "webviewId == dimicek.log && webviewSection == commit",
           "group": "6_compare@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "dimicek.log.showHistory",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "dimicek.log.showHistory",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "7_dimicek@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "dimicek.log.showHistory",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "9_dimicek@1"
         }
       ]
     },
