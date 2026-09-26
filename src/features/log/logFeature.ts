@@ -52,6 +52,16 @@ export function registerLogFeature(
     ),
     vscode.commands.registerCommand('dimicek.log.refresh', () => model.reload()),
     vscode.commands.registerCommand('dimicek.log.showHistory', showHistory),
+    vscode.commands.registerCommand(
+      'dimicek.log.revealCommit',
+      async (target?: string | CommitContext) => {
+        const hash = typeof target === 'string' ? target : target?.hash;
+        if (hash) {
+          await vscode.commands.executeCommand(`${LogViewProvider.viewId}.focus`);
+          await view.revealCommit(hash);
+        }
+      },
+    ),
     commitCommand('dimicek.log.copyRevision', (hash) => actions.copyRevision(hash)),
     commitCommand('dimicek.log.newBranch', (hash) => actions.newBranch(hash)),
     commitCommand('dimicek.log.newTag', (hash) => actions.promptNewTag(hash)),

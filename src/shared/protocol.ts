@@ -79,6 +79,7 @@ export type LogToWebview =
       filtersVersion: number;
     }
   | { type: 'append'; commits: LogCommit[]; hasMore: boolean }
+  | { type: 'select'; hash: string }
   | { type: 'details'; details: LogCommitDetails }
   | { type: 'detailsError'; hash: string; message: string }
   | { type: 'loading'; loading: boolean }

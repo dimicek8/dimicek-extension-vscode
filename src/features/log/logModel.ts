@@ -108,6 +108,12 @@ export class LogModel implements vscode.Disposable {
     return this.reload();
   }
 
+  showCommit(hash: string): Promise<void> {
+    this.currentFilters = { text: hash };
+    this.externalFiltersVersion++;
+    return this.reload();
+  }
+
   showHistory(repository: Repository, path: string): Promise<void> {
     this.repoManager.setActiveRepository(repository);
     this.currentFilters = path ? { path, branch: 'HEAD' } : { branch: 'HEAD' };

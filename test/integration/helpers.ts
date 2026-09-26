@@ -61,3 +61,13 @@ export async function activateWithRepository(repo: TestRepo): Promise<ReadyApi> 
   );
   return api as ReadyApi;
 }
+
+export async function eventually(check: () => boolean, timeoutMs = 10_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!check()) {
+    if (Date.now() > deadline) {
+      throw new Error(`Condition not met within ${timeoutMs}ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}

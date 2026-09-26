@@ -56,6 +56,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
   private view: vscode.WebviewView | undefined;
   private ready = false;
   private selectedHash: string | undefined;
+  private pendingSelect: string | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
   private readonly readyEmitter = new vscode.EventEmitter<void>();
@@ -96,6 +97,7 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this.ready = true;
         this.post(this.resetMessage(false));
         this.readyEmitter.fire();
+        this.flushSelect();
         if (!this.model.activeRepository) {
           await this.model.reload();
         }
@@ -120,6 +122,22 @@ export class LogViewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         await vscode.env.clipboard.writeText(message.text);
         vscode.window.setStatusBarMessage(`$(copy) Copied ${message.text}`, 3000);
         break;
+    }
+  }
+
+  async revealCommit(hash: string): Promise<void> {
+    if (!this.model.loadedCommits.some((commit) => commit.hash === hash)) {
+      await this.model.showCommit(hash);
+    }
+    this.pendingSelect = hash;
+    this.flushSelect();
+    await this.showDetails(hash);
+  }
+
+  private flushSelect(): void {
+    if (this.pendingSelect && this.ready) {
+      this.post({ type: 'select', hash: this.pendingSelect });
+      this.pendingSelect = undefined;
     }
   }
 

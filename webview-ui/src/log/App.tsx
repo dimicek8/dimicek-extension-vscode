@@ -88,6 +88,9 @@ export function App() {
         case 'error':
           setError(message.message);
           break;
+        case 'select':
+          setSelected(message.hash);
+          break;
         case 'details':
           setDetails(message.details);
           setDetailsError(undefined);

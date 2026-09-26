@@ -2,6 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { GitError } from './gitError';
 import { type GitRunner, isVersionAtLeast } from './gitExec';
+import { type BlameLine, parseBlame } from './parsers/blame';
 import { buildLogArgs, type Commit, type LogOptions, parseLog } from './parsers/log';
 import { parseRecentCheckouts } from './parsers/reflog';
 import { type NameStatusEntry, parseNameStatus } from './parsers/nameStatus';
@@ -124,6 +125,17 @@ export class Repository {
       }
       throw error;
     }
+  }
+
+  async blame(path: string, contents?: string, signal?: AbortSignal): Promise<BlameLine[]> {
+    const args = [
+      'blame',
+      '--porcelain',
+      ...(contents === undefined ? [] : ['--contents', '-']),
+      '--',
+      path,
+    ];
+    return parseBlame(await this.run(args, signal, { input: contents }));
   }
 
   getFileContent(ref: string, path: string, signal?: AbortSignal): Promise<string> {

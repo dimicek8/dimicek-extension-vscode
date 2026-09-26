@@ -195,6 +195,33 @@
         "title": "Show History",
         "category": "Dimicek",
         "icon": "$(history)"
+      },
+      {
+        "command": "dimicek.blame.toggle",
+        "title": "Annotate with Git Blame",
+        "category": "Dimicek",
+        "icon": "$(person)"
+      },
+      {
+        "command": "dimicek.blame.close",
+        "title": "Close Annotations",
+        "category": "Dimicek",
+        "icon": "$(close)"
+      },
+      {
+        "command": "dimicek.blame.showCommitOfLine",
+        "title": "Show Commit of This Line in Git Log",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.blame.copyHash",
+        "title": "Copy Commit Hash",
+        "category": "Dimicek"
+      },
+      {
+        "command": "dimicek.log.revealCommit",
+        "title": "Show Commit in Git Log",
+        "category": "Dimicek"
       }
     ],
     "viewsContainers": {
@@ -391,6 +418,26 @@
         {
           "command": "dimicek.log.showHistory",
           "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.blame.toggle",
+          "when": "dimicek.hasRepository && resourceScheme == file && !dimicek.blameActive"
+        },
+        {
+          "command": "dimicek.blame.close",
+          "when": "dimicek.blameActive"
+        },
+        {
+          "command": "dimicek.blame.showCommitOfLine",
+          "when": "dimicek.hasRepository && resourceScheme == file"
+        },
+        {
+          "command": "dimicek.blame.copyHash",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.log.revealCommit",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -499,6 +546,16 @@
           "command": "dimicek.log.showHistory",
           "when": "dimicek.hasRepository && resourceScheme == file",
           "group": "7_dimicek@1"
+        },
+        {
+          "command": "dimicek.blame.toggle",
+          "when": "dimicek.hasRepository && resourceScheme == file && !dimicek.blameActive",
+          "group": "7_dimicek@2"
+        },
+        {
+          "command": "dimicek.blame.close",
+          "when": "dimicek.hasRepository && resourceScheme == file && dimicek.blameActive",
+          "group": "7_dimicek@2"
         }
       ],
       "editor/context": [
@@ -506,6 +563,21 @@
           "command": "dimicek.log.showHistory",
           "when": "dimicek.hasRepository && resourceScheme == file",
           "group": "9_dimicek@1"
+        },
+        {
+          "command": "dimicek.blame.toggle",
+          "when": "dimicek.hasRepository && resourceScheme == file && !dimicek.blameActive",
+          "group": "9_dimicek@2"
+        },
+        {
+          "command": "dimicek.blame.close",
+          "when": "dimicek.hasRepository && resourceScheme == file && dimicek.blameActive",
+          "group": "9_dimicek@2"
+        },
+        {
+          "command": "dimicek.blame.showCommitOfLine",
+          "when": "dimicek.hasRepository && resourceScheme == file",
+          "group": "9_dimicek@3"
         }
       ]
     },
