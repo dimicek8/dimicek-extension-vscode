@@ -111,3 +111,26 @@ describe('Repository.getHistoryFingerprint', () => {
     }
   });
 });
+
+describe('Repository tag sharing', () => {
+  it('pushes tags and deletes them locally and on the remote', async () => {
+    const fixture = createHistoryRepo();
+    try {
+      const repository = new Repository(fixture.repo.root, new Git(await findGit([])));
+      await repository.createTag('v0.1', fixture.commits.app);
+      await repository.createTag('v0.2', fixture.commits.typo, 'Second');
+
+      await repository.pushTags('origin', ['v0.1', 'v0.2']);
+      const remoteTags = () => fixture.repo.git('ls-remote', '--tags', 'origin');
+      expect(remoteTags()).toContain('refs/tags/v0.1');
+      expect(remoteTags()).toContain('refs/tags/v0.2');
+
+      await repository.deleteRemoteTag('origin', 'v0.1');
+      await repository.deleteTag('v0.1');
+      expect(remoteTags()).not.toContain('refs/tags/v0.1');
+      expect(fixture.repo.git('tag', '--list', 'v0.1')).toBe('');
+    } finally {
+      fixture.repo.dispose();
+    }
+  });
+});

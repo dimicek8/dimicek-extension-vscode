@@ -12,6 +12,7 @@ import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
 import { type RebaseFeature, registerRebaseFeature } from './features/rebase/rebaseFeature';
 import { registerStashFeature, type StashFeature } from './features/stash/stashFeature';
+import { registerTagsFeature, type TagsFeature } from './features/tags/tagsFeature';
 import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
 import { RepoManager } from './vscode/repoManager';
 
@@ -28,6 +29,7 @@ export interface DimicekApi {
   stash: StashFeature | undefined;
   conflicts: ConflictsFeature | undefined;
   rebase: RebaseFeature | undefined;
+  tags: TagsFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -49,6 +51,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const stash = registerStashFeature(context, commit.model, output);
     const conflicts = registerConflictsFeature(context, commit.model, commit.tree, output);
     const rebase = registerRebaseFeature(context, commit.model, output);
+    const tags = registerTagsFeature(context, commit.model, output);
     return {
       repoManager,
       commit,
@@ -62,6 +65,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       stash,
       conflicts,
       rebase,
+      tags,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -80,6 +84,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       stash: undefined,
       conflicts: undefined,
       rebase: undefined,
+      tags: undefined,
     };
   }
 }

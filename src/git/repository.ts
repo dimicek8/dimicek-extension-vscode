@@ -382,6 +382,28 @@ export class Repository {
     });
   }
 
+  pushTags(remote: string, names: readonly string[], signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['push', remote, ...names.map((name) => `refs/tags/${name}`)], signal, {
+        timeoutMs: NETWORK_TIMEOUT_MS,
+      });
+    });
+  }
+
+  deleteTag(name: string): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['tag', '--delete', name]);
+    });
+  }
+
+  deleteRemoteTag(remote: string, name: string, signal?: AbortSignal): Promise<void> {
+    return this.exclusive(async () => {
+      await this.run(['push', remote, '--delete', `refs/tags/${name}`], signal, {
+        timeoutMs: NETWORK_TIMEOUT_MS,
+      });
+    });
+  }
+
   async isValidTagName(name: string): Promise<boolean> {
     try {
       await this.run(['check-ref-format', `refs/tags/${name}`]);

@@ -311,6 +311,30 @@
         "title": "Interactively Rebase from Here…",
         "category": "Dimicek",
         "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "dimicek.tags.push",
+        "title": "Push Tags…",
+        "category": "Dimicek",
+        "icon": "$(tag)"
+      },
+      {
+        "command": "dimicek.tags.delete",
+        "title": "Delete Tag…",
+        "category": "Dimicek",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "dimicek.tags.pushOne",
+        "title": "Push Tag",
+        "category": "Dimicek",
+        "icon": "$(repo-push)"
+      },
+      {
+        "command": "dimicek.tags.deleteOne",
+        "title": "Delete Tag…",
+        "category": "Dimicek",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -607,6 +631,22 @@
         {
           "command": "dimicek.log.interactiveRebase",
           "when": "false"
+        },
+        {
+          "command": "dimicek.tags.push",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.tags.delete",
+          "when": "dimicek.hasRepository"
+        },
+        {
+          "command": "dimicek.tags.pushOne",
+          "when": "false"
+        },
+        {
+          "command": "dimicek.tags.deleteOne",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -756,6 +796,16 @@
           "command": "dimicek.log.interactiveRebase",
           "when": "webviewId == dimicek.log && webviewSection == commit && !merge",
           "group": "5_reset@2"
+        },
+        {
+          "command": "dimicek.tags.pushOne",
+          "when": "webviewId == dimicek.log && webviewSection == tag",
+          "group": "1_tag@1"
+        },
+        {
+          "command": "dimicek.tags.deleteOne",
+          "when": "webviewId == dimicek.log && webviewSection == tag",
+          "group": "1_tag@2"
         }
       ],
       "explorer/context": [

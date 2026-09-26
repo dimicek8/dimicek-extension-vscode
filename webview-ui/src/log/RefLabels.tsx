@@ -14,6 +14,15 @@ export function RefLabels({ labels }: { labels: LogRef[] }) {
         <span
           key={`${label.kind}:${label.name}`}
           className={`ref ref--${label.kind}${label.current ? ' ref--current' : ''}`}
+          data-vscode-context={
+            label.kind === 'tag'
+              ? JSON.stringify({
+                  webviewSection: 'tag',
+                  tag: label.name,
+                  preventDefaultContextMenuItems: true,
+                })
+              : undefined
+          }
           title={
             label.current && label.kind === 'branch' ? `${label.name} (current branch)` : label.name
           }
