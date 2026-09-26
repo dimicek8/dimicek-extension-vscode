@@ -500,6 +500,12 @@
           ],
           "default": "ask",
           "description": "How Update Project applies upstream changes."
+        },
+        "dimicek.fetch.autoFetchInterval": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Fetch all remotes in the background every N minutes. 0 turns automatic fetch off."
         }
       }
     },

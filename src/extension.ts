@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { type BranchesFeature, registerBranchesFeature } from './features/branches/branchesFeature';
 import { type CommitFeature, registerCommitFeature } from './features/commit/commitFeature';
+import { type FetchFeature, registerFetchFeature } from './features/fetch/fetchFeature';
 import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
 import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
@@ -13,6 +14,7 @@ export interface DimicekApi {
   log: LogFeature | undefined;
   push: PushFeature | undefined;
   update: UpdateFeature | undefined;
+  fetch: FetchFeature | undefined;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
@@ -28,7 +30,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
     const log = registerLogFeature(context, repoManager, commit.model, branches.operations, output);
     const push = registerPushFeature(context, commit.model, output);
     const update = registerUpdateFeature(context, commit.model, output);
-    return { repoManager, commit, branches, log, push, update };
+    const fetch = registerFetchFeature(context, repoManager, output);
+    return { repoManager, commit, branches, log, push, update, fetch };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.error(message);
@@ -40,6 +43,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Dimice
       log: undefined,
       push: undefined,
       update: undefined,
+      fetch: undefined,
     };
   }
 }

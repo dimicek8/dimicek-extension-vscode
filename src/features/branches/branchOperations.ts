@@ -107,10 +107,16 @@ export class BranchOperations {
   }
 
   fetch(): Promise<boolean> {
-    return this.perform('Fetching…', async (repository) => {
-      await repository.fetch();
-      vscode.window.setStatusBarMessage('$(check) Fetched', 3000);
-    });
+    return runOperation(
+      this.model,
+      this.output,
+      'Fetching from all remotes…',
+      async (repository) => {
+        await repository.fetch();
+        vscode.window.setStatusBarMessage('$(check) Fetched', 3000);
+      },
+      vscode.ProgressLocation.Notification,
+    );
   }
 
   async promptNewBranch(startPoint: string, startLabel: string): Promise<boolean> {
