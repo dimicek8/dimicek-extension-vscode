@@ -131,6 +131,12 @@ export class BranchesPopup {
 
   async runCommand(command: BranchCommand): Promise<unknown> {
     switch (command) {
+      case 'updateProject':
+        return vscode.commands.executeCommand('dimicek.update.project');
+      case 'commit':
+        return vscode.commands.executeCommand('dimicek.commit.show');
+      case 'push':
+        return vscode.commands.executeCommand('dimicek.push.show');
       case 'newBranch':
         return this.operations.promptNewBranch('HEAD', this.model.branch.head ?? 'HEAD');
       case 'checkoutRevision':

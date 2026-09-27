@@ -2,6 +2,9 @@ import type { LocalBranch, Ref, RemoteBranch } from '../../git/parsers/refs';
 import type { OperationKind } from '../../git/repository';
 
 export type BranchCommand =
+  | 'updateProject'
+  | 'commit'
+  | 'push'
   | 'newBranch'
   | 'checkoutRevision'
   | 'fetch'
@@ -81,11 +84,18 @@ const OPERATION_COMMANDS: Partial<Record<OperationKind, BranchEntry[]>> = {
   ],
 };
 
-const COMMANDS: BranchEntry[] = [
+const PROJECT_COMMANDS: BranchEntry[] = [
+  { kind: 'command', command: 'updateProject', label: 'Update Project…', icon: 'repo-pull' },
+  { kind: 'command', command: 'commit', label: 'Commit…', icon: 'git-commit' },
+  { kind: 'command', command: 'push', label: 'Push…', icon: 'repo-push' },
+];
+
+const BRANCH_COMMANDS: BranchEntry[] = [
   { kind: 'command', command: 'newBranch', label: 'New Branch…', icon: 'add' },
   { kind: 'command', command: 'checkoutRevision', label: 'Checkout Tag or Revision…', icon: 'tag' },
-  { kind: 'command', command: 'fetch', label: 'Fetch', icon: 'sync' },
 ];
+
+const SEPARATOR: BranchEntry = { kind: 'separator', label: '' };
 
 export function describeLocalBranch(branch: LocalBranch): string | undefined {
   const upstream = branch.upstream;
@@ -150,7 +160,11 @@ export function buildBranchEntries({
 
   const entries: BranchEntry[] = [
     ...((operation && OPERATION_COMMANDS[operation]) ?? []),
-    ...COMMANDS,
+    ...PROJECT_COMMANDS,
+    SEPARATOR,
+    ...BRANCH_COMMANDS,
+    SEPARATOR,
+    { kind: 'command', command: 'fetch', label: 'Fetch', icon: 'sync' },
     ...(github ? GITHUB_COMMANDS : []),
   ];
   if (recentBranches.length > 0) {

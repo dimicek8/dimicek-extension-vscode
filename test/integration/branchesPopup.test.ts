@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 import type { BranchEntry, BranchRef } from '../../src/features/branches/branchEntries';
 import { createHistoryRepo, type HistoryRepo } from '../fixtures/testRepo';
-import { activateWithRepository, type ReadyApi } from './helpers';
+import { activateWithRepository, type ReadyApi, waitFor } from './helpers';
 
 describe('Branches popup', () => {
   let api: ReadyApi;
@@ -65,7 +65,16 @@ describe('Branches popup', () => {
 
   it('lists commands, recent, local and remote branches with favorites first', async () => {
     const all = await entries();
-    assert.deepStrictEqual(all.slice(0, 3), ['>newBranch', '>checkoutRevision', '>fetch']);
+    assert.deepStrictEqual(all.slice(0, 8), [
+      '>updateProject',
+      '>commit',
+      '>push',
+      '----',
+      '>newBranch',
+      '>checkoutRevision',
+      '----',
+      '>fetch',
+    ]);
     assert.deepStrictEqual(section(all, 'Recent'), ['lines-b', 'lines-a', 'gone', 'feature/login']);
     assert.deepStrictEqual(section(all, 'Local'), [
       'main',
@@ -155,5 +164,32 @@ describe('Branches popup', () => {
         .slice(0, 2);
     assert.deepStrictEqual(await labels('main', true), ["New Branch from 'main'…", '']);
     assert.deepStrictEqual(await labels('topic', false), ['Checkout', "New Branch from 'topic'…"]);
+  });
+});
+
+describe('Branches popup project commands', () => {
+  it('opens Commit, Push and Update Project from the popup', async () => {
+    const fixture = createHistoryRepo();
+    try {
+      const api = await activateWithRepository(fixture.repo);
+      await api.branches.popup.runCommand('commit');
+      const ready = waitFor(api.push.dialog.onDidBecomeReady);
+      await api.branches.popup.runCommand('push');
+      await ready;
+      assert.ok(api.push.dialog.isOpen);
+      api.push.dialog.close();
+
+      await vscode.workspace
+        .getConfiguration()
+        .update('dimicek.update.method', 'merge', vscode.ConfigurationTarget.Global);
+      assert.ok(await api.branches.popup.runCommand('updateProject'));
+      assert.strictEqual(fixture.repo.git('log', '-1', '--format=%P').split(' ').length, 2);
+    } finally {
+      await vscode.workspace
+        .getConfiguration()
+        .update('dimicek.update.method', undefined, vscode.ConfigurationTarget.Global);
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      fixture.repo.dispose();
+    }
   });
 });

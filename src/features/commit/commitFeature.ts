@@ -80,6 +80,10 @@ export function registerCommitFeature(
     view.onDidChangeCheckboxState((event) => tree.applyCheckboxChanges(event.items)),
     vscode.window.registerFileDecorationProvider(new ChangeDecorationProvider()),
     vscode.commands.registerCommand('dimicek.changes.refresh', () => model.refresh()),
+    vscode.commands.registerCommand('dimicek.commit.show', async () => {
+      await vscode.commands.executeCommand('workbench.view.extension.dimicek');
+      await vscode.commands.executeCommand(`${CommitViewProvider.viewId}.focus`);
+    }),
     vscode.workspace.registerTextDocumentContentProvider(GIT_SCHEME, contentProvider),
     commitView,
     vscode.window.registerWebviewViewProvider(CommitViewProvider.viewId, commitView),

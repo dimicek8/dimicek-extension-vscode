@@ -347,6 +347,12 @@
         "title": "Pull Requests…",
         "category": "Dimicek",
         "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "dimicek.commit.show",
+        "title": "Commit…",
+        "category": "Dimicek",
+        "icon": "$(git-commit)"
       }
     ],
     "viewsContainers": {
@@ -667,6 +673,10 @@
         {
           "command": "dimicek.github.pullRequests",
           "when": "dimicek.hasGitHubRemote"
+        },
+        {
+          "command": "dimicek.commit.show",
+          "when": "dimicek.hasRepository"
         }
       ],
       "view/item/context": [

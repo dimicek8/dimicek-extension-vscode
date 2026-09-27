@@ -84,8 +84,13 @@ describe('buildBranchEntries', () => {
       favorites: new Set(['refs/heads/main', 'refs/heads/feature/b', 'refs/remotes/origin/main']),
     });
     expect(outline(entries)).toEqual([
+      '>updateProject',
+      '>commit',
+      '>push',
+      '----',
       '>newBranch',
       '>checkoutRevision',
+      '----',
       '>fetch',
       '--Recent--',
       'star-full:feature/b',
@@ -118,12 +123,12 @@ describe('buildBranchEntries during an operation', () => {
     const base = { refs: [], recent: [], favorites: new Set<string>() };
     expect(outline(buildBranchEntries({ ...base, operation: 'merge' })).slice(0, 2)).toEqual([
       '>abortMerge',
-      '>newBranch',
+      '>updateProject',
     ]);
     expect(outline(buildBranchEntries({ ...base, operation: 'rebase' })).slice(0, 3)).toEqual([
       '>continueRebase',
       '>abortRebase',
-      '>newBranch',
+      '>updateProject',
     ]);
   });
 });
@@ -137,8 +142,13 @@ describe('buildBranchEntries for GitHub repositories', () => {
       github: true,
     });
     expect(outline(entries)).toEqual([
+      '>updateProject',
+      '>commit',
+      '>push',
+      '----',
       '>newBranch',
       '>checkoutRevision',
+      '----',
       '>fetch',
       '>createPullRequest',
       '>pullRequests',
