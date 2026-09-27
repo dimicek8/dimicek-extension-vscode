@@ -155,3 +155,23 @@ describe('buildBranchEntries for GitHub repositories', () => {
     ]);
   });
 });
+
+describe('buildBranchEntries with IntelliJ shortcuts', () => {
+  it('shows the shortcuts of the platform next to the commands', () => {
+    const base = { refs: [], recent: [], favorites: new Set<string>() };
+    const describe = (shortcuts?: 'mac' | 'other') =>
+      buildBranchEntries({ ...base, shortcuts }).flatMap((entry) =>
+        entry.kind === 'command' && entry.description
+          ? [`${entry.command}=${entry.description}`]
+          : [],
+      );
+    expect(describe('mac')).toEqual(['updateProject=⌘T', 'commit=⌘K', 'push=⇧⌘K', 'newBranch=⌥⌘N']);
+    expect(describe('other')).toEqual([
+      'updateProject=Ctrl+T',
+      'commit=Ctrl+K',
+      'push=Ctrl+Shift+K',
+      'newBranch=Ctrl+Alt+N',
+    ]);
+    expect(describe()).toEqual([]);
+  });
+});

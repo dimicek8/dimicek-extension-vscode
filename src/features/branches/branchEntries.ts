@@ -21,7 +21,7 @@ export type BranchCommand =
 export type BranchRef = LocalBranch | RemoteBranch;
 
 export type BranchEntry =
-  | { kind: 'command'; command: BranchCommand; label: string; icon: string }
+  | { kind: 'command'; command: BranchCommand; label: string; icon: string; description?: string }
   | { kind: 'separator'; label: string }
   | {
       kind: 'branch';
@@ -39,7 +39,27 @@ export interface BranchEntriesInput {
   favorites: ReadonlySet<string>;
   operation?: OperationKind;
   github?: boolean;
+  shortcuts?: ShortcutPlatform;
 }
+
+export type ShortcutPlatform = 'mac' | 'other';
+
+const SHORTCUTS: Partial<Record<BranchCommand, Record<ShortcutPlatform, string>>> = {
+  updateProject: { mac: '⌘T', other: 'Ctrl+T' },
+  commit: { mac: '⌘K', other: 'Ctrl+K' },
+  push: { mac: '⇧⌘K', other: 'Ctrl+Shift+K' },
+  newBranch: { mac: '⌥⌘N', other: 'Ctrl+Alt+N' },
+};
+
+function withShortcut(entry: BranchEntry, platform: ShortcutPlatform | undefined): BranchEntry {
+  if (entry.kind !== 'command' || !platform) {
+    return entry;
+  }
+  const shortcut = SHORTCUTS[entry.command]?.[platform];
+  return shortcut ? { ...entry, description: shortcut } : entry;
+}
+
+const FETCH: BranchEntry = { kind: 'command', command: 'fetch', label: 'Fetch', icon: 'sync' };
 
 const MAX_RECENT = 5;
 
@@ -150,6 +170,7 @@ export function buildBranchEntries({
   favorites,
   operation,
   github,
+  shortcuts,
 }: BranchEntriesInput): BranchEntry[] {
   const locals = refs.filter((ref): ref is LocalBranch => ref.type === 'branch');
   const remotes = refs.filter((ref): ref is RemoteBranch => ref.type === 'remoteBranch');
@@ -158,15 +179,16 @@ export function buildBranchEntries({
     .filter((branch): branch is LocalBranch => branch !== undefined && !branch.isHead)
     .slice(0, MAX_RECENT);
 
-  const entries: BranchEntry[] = [
+  const commands: BranchEntry[] = [
     ...((operation && OPERATION_COMMANDS[operation]) ?? []),
     ...PROJECT_COMMANDS,
     SEPARATOR,
     ...BRANCH_COMMANDS,
     SEPARATOR,
-    { kind: 'command', command: 'fetch', label: 'Fetch', icon: 'sync' },
+    FETCH,
     ...(github ? GITHUB_COMMANDS : []),
   ];
+  const entries = commands.map((entry) => withShortcut(entry, shortcuts));
   if (recentBranches.length > 0) {
     entries.push({ kind: 'separator', label: 'Recent' });
     entries.push(...recentBranches.map((branch) => branchEntry(branch, favorites)));

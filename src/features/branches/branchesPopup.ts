@@ -10,6 +10,8 @@ import {
 } from './branchEntries';
 import type { BranchOperations } from './branchOperations';
 
+export const INTELLIJ_KEYMAP_SETTING = 'dimicek.keymap.intellij';
+
 interface EntryItem extends vscode.QuickPickItem {
   entry?: BranchEntry;
 }
@@ -23,7 +25,12 @@ function toItem(entry: BranchEntry): EntryItem {
     case 'separator':
       return { label: entry.label, kind: vscode.QuickPickItemKind.Separator };
     case 'command':
-      return { label: entry.label, iconPath: new vscode.ThemeIcon(entry.icon), entry };
+      return {
+        label: entry.label,
+        description: entry.description,
+        iconPath: new vscode.ThemeIcon(entry.icon),
+        entry,
+      };
     case 'branch':
       return {
         label: entry.label,
@@ -76,6 +83,11 @@ export class BranchesPopup {
       favorites: this.favorites.get(repository.root),
       operation: operation?.kind,
       github,
+      shortcuts: vscode.workspace.getConfiguration().get<boolean>(INTELLIJ_KEYMAP_SETTING, false)
+        ? process.platform === 'darwin'
+          ? 'mac'
+          : 'other'
+        : undefined,
     });
   }
 

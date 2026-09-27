@@ -921,7 +921,8 @@
         "dimicek.changes.groupByDirectory": {
           "type": "boolean",
           "default": true,
-          "description": "Group files in the Changes view by directory."
+          "description": "Group files in the Changes view by directory.",
+          "order": 5
         },
         "dimicek.update.method": {
           "type": "string",
@@ -936,13 +937,27 @@
             "Rebase the current branch onto the upstream branch"
           ],
           "default": "ask",
-          "description": "How Update Project applies upstream changes."
+          "description": "How Update Project applies upstream changes.",
+          "order": 3
         },
         "dimicek.fetch.autoFetchInterval": {
           "type": "number",
           "default": 0,
           "minimum": 0,
-          "description": "Fetch all remotes in the background every N minutes. 0 turns automatic fetch off."
+          "description": "Fetch all remotes in the background every N minutes. 0 turns automatic fetch off.",
+          "order": 4
+        },
+        "dimicek.keymap.intellij": {
+          "type": "boolean",
+          "default": false,
+          "order": 1,
+          "markdownDescription": "Use IntelliJ IDEA shortcuts: `Cmd/Ctrl+T` Update Project, `Cmd/Ctrl+K` Commit, `Shift+Cmd/Ctrl+K` Push, `Alt+Cmd/Ctrl+N` New Branch, `Cmd+9`/`Alt+9` Git Log, `Cmd+0`/`Alt+0` Changes. **Note:** `Cmd/Ctrl+K` starts many VS Code shortcuts (for example `Cmd/Ctrl+K Cmd/Ctrl+S`); those stop working while this is on."
+        },
+        "dimicek.quietBuiltInSourceControl": {
+          "type": "boolean",
+          "default": false,
+          "order": 2,
+          "markdownDescription": "Turn off the change count badge and the sync button of the built-in Source Control, so they do not duplicate Dimicek. Turning this off restores them."
         }
       }
     },
@@ -975,6 +990,42 @@
         "key": "delete",
         "mac": "cmd+backspace",
         "when": "focusedView == dimicek.changes"
+      },
+      {
+        "command": "dimicek.update.project",
+        "key": "ctrl+t",
+        "mac": "cmd+t",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
+      },
+      {
+        "command": "dimicek.commit.show",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
+      },
+      {
+        "command": "dimicek.push.show",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
+      },
+      {
+        "command": "dimicek.branches.newBranch",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
+      },
+      {
+        "command": "dimicek.log.show",
+        "key": "alt+9",
+        "mac": "cmd+9",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
+      },
+      {
+        "command": "dimicek.changes.focus",
+        "key": "alt+0",
+        "mac": "cmd+0",
+        "when": "config.dimicek.keymap.intellij && dimicek.hasRepository"
       }
     ]
   },

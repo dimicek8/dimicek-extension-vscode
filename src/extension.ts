@@ -13,6 +13,7 @@ import { type LogFeature, registerLogFeature } from './features/log/logFeature';
 import { type PushFeature, registerPushFeature } from './features/push/pushFeature';
 import { type RebaseFeature, registerRebaseFeature } from './features/rebase/rebaseFeature';
 import { registerStashFeature, type StashFeature } from './features/stash/stashFeature';
+import { BuiltInSourceControl } from './features/settings/builtInSourceControl';
 import { registerTagsFeature, type TagsFeature } from './features/tags/tagsFeature';
 import { registerUpdateFeature, type UpdateFeature } from './features/update/updateFeature';
 import { RepoManager } from './vscode/repoManager';
@@ -37,6 +38,9 @@ export interface DimicekApi {
 export async function activate(context: vscode.ExtensionContext): Promise<DimicekApi> {
   const output = vscode.window.createOutputChannel('Dimicek', { log: true });
   context.subscriptions.push(output);
+  const builtInSourceControl = new BuiltInSourceControl();
+  context.subscriptions.push(builtInSourceControl);
+  void builtInSourceControl.initialize();
   output.info('Dimicek activated');
 
   try {
