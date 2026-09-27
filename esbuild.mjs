@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs';
 import * as esbuild from 'esbuild';
 
 const production = process.argv.includes('--production');
@@ -50,6 +51,9 @@ const integrationTestOptions = {
 };
 
 async function main() {
+  if (tests) {
+    rmSync('out/test', { recursive: true, force: true });
+  }
   const ctx = await esbuild.context(tests ? integrationTestOptions : extensionOptions);
   if (watch) {
     await ctx.watch();
