@@ -154,15 +154,13 @@ describe('Changes view', () => {
     });
   });
 
-  it('waits for a newer refresh when its own refresh is superseded', async () => {
-    let newerDone = false;
+  it('shows the result of a newer refresh when its own refresh is superseded', async () => {
     const first = commit.model.refresh();
+    fixture.repo.write('superseded.txt', 'new\n');
     const newer = commit.model.refresh();
-    void newer.then(() => {
-      newerDone = true;
-    });
     await first;
-    assert.strictEqual(newerDone, true);
+    assert.ok(commit.model.changes.some((change) => change.path === 'superseded.txt'));
+    await newer;
   });
 
   it('exposes the current branch with ahead and behind counts', () => {

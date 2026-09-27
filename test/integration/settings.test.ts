@@ -27,12 +27,18 @@ describe('Settings', () => {
 
   it('quiets the built-in Source Control and restores it', async () => {
     await set(QUIET_SCM_SETTING, true);
-    await eventually(() => configuration().inspect('scm.countBadge')?.globalValue === 'off');
-    assert.strictEqual(configuration().inspect('git.enableStatusBarSync')?.globalValue, false);
+    await eventually(
+      () =>
+        configuration().inspect('scm.countBadge')?.globalValue === 'off' &&
+        configuration().inspect('git.enableStatusBarSync')?.globalValue === false,
+    );
 
     await set(QUIET_SCM_SETTING, false);
-    await eventually(() => configuration().inspect('scm.countBadge')?.globalValue === undefined);
-    assert.strictEqual(configuration().inspect('git.enableStatusBarSync')?.globalValue, undefined);
+    await eventually(
+      () =>
+        configuration().inspect('scm.countBadge')?.globalValue === undefined &&
+        configuration().inspect('git.enableStatusBarSync')?.globalValue === undefined,
+    );
   });
 
   it('shows IntelliJ shortcuts in the branches popup when the keymap is on', async () => {

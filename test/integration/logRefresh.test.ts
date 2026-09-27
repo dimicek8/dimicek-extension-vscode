@@ -58,15 +58,16 @@ describe('Git Log refresh', () => {
     }
   });
 
-  it('waits for a newer load when its own load is superseded', async () => {
-    let newerDone = false;
+  it('shows the result of a newer load when its own load is superseded', async () => {
     const first = api.log.model.reload();
-    const newer = api.log.model.reload();
-    void newer.then(() => {
-      newerDone = true;
-    });
+    const newer = api.log.model.setFilters({ author: 'Other User' });
     await first;
-    assert.strictEqual(newerDone, true);
+    assert.deepStrictEqual(
+      api.log.model.loadedCommits.map((commit) => commit.subject),
+      ['Remote change'],
+    );
+    await newer;
+    await api.log.model.setFilters({});
   });
 
   it('jumps to the top when filters change', async () => {
