@@ -1,4 +1,5 @@
 import * as assert from 'node:assert';
+import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { ChangeDecorationProvider } from '../../src/features/commit/changeDecorations';
@@ -161,6 +162,8 @@ describe('Changes view', () => {
     await first;
     assert.ok(commit.model.changes.some((change) => change.path === 'superseded.txt'));
     await newer;
+    rmSync(join(fixture.repo.root, 'superseded.txt'));
+    await commit.model.refresh();
   });
 
   it('exposes the current branch with ahead and behind counts', () => {
